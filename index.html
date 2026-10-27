@@ -226,6 +226,11 @@ footer{letter-spacing:.04em}
         <input id="productPrice" type="number" min="0"
           max="10000000" step="0.01" required placeholder="199">
 
+        <label for="productCategory">Category</label>
+        <select id="productCategory" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:#0b1425;color:white;font:inherit">
+          <option>Gaming</option><option>Electronics</option><option>Fashion</option><option>Home</option><option>Books & Stationery</option><option>Beauty</option><option>Sports</option><option>Accessories</option><option>Other</option>
+        </select>
+
         <label for="productDescription">Description</label>
         <textarea id="productDescription" maxlength="400"
           placeholder="Describe the product"></textarea>
@@ -253,8 +258,18 @@ footer{letter-spacing:.04em}
 
       <label for="search">Search products</label>
       <input id="search" placeholder="Find a product">
-
+      <label for="categoryFilter">Filter by category</label>
+      <select id="categoryFilter" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:#0b1425;color:white;font:inherit">
+        <option value="all">All categories</option><option>Gaming</option><option>Electronics</option><option>Fashion</option><option>Home</option><option>Books & Stationery</option><option>Beauty</option><option>Sports</option><option>Accessories</option><option>Other</option>
+      </select>
       <div id="products" class="products"></div>
+
+      <div class="section" id="cartSection">
+        <h2>🛒 Shopping cart <span id="cartCount" class="count">0 items</span></h2>
+        <p class="note">Add products to your cart, adjust quantities, and prepare one WhatsApp enquiry for the whole order.</p>
+        <div id="cartItems" class="products"></div>
+        <div class="toolbar"><strong>Total: <span id="cartTotal" class="price">₹0</span></strong><div class="actions"><button id="clearCartBtn">Clear cart</button><button id="checkoutBtn" class="green">Checkout on WhatsApp</button></div></div>
+      </div>
 
       <div class="section">
         <h2>Customer storefront preview</h2>
@@ -296,11 +311,13 @@ const PRODUCTS_KEY = "minicatalog_products_v1";
 const SHOP_KEY = "minicatalog_shop_v1";
 const DESCRIPTION_KEY = "minicatalog_description_v2";
 const WHATSAPP_KEY = "minicatalog_whatsapp_v2";
+const CART_KEY = "minicatalog_cart_v1";
 
 let products = [];
 let shopName = "";
 let shopDescription = "";
 let whatsapp = "";
+let cart = {};
 
 try {
   const saved = JSON.parse(localStorage.getItem(PRODUCTS_KEY) || "[]");
@@ -313,6 +330,8 @@ try {
 shopName = localStorage.getItem(SHOP_KEY) || "";
 shopDescription = localStorage.getItem(DESCRIPTION_KEY) || "";
 whatsapp = localStorage.getItem(WHATSAPP_KEY) || "";
+try { const savedCart = JSON.parse(localStorage.getItem(CART_KEY) || "{}"); cart = savedCart && typeof savedCart === "object" && !Array.isArray(savedCart) ? savedCart : {}; } catch { cart = {}; }
+for (const id of Object.keys(cart)) { const qty = Number(cart[id]); if (!Number.isInteger(qty) || qty < 1 || !products.some(p => p.id === id)) delete cart[id]; }
 
 $("shopName").value = shopName;
 $("shopDescription").value = shopDescription;
@@ -323,6 +342,7 @@ function save() {
   localStorage.setItem(SHOP_KEY, shopName);
   localStorage.setItem(DESCRIPTION_KEY, shopDescription);
   localStorage.setItem(WHATSAPP_KEY, whatsapp);
+  localStorage.setItem(CART_KEY, JSON.stringify(cart));
 }
 
 function money(value) {
@@ -344,8 +364,10 @@ function element(tag, className, value) {
 
 function render() {
   const query = $("search").value.trim().toLowerCase();
+  const category = $("categoryFilter").value;
   const filtered = products.filter(p =>
-    (p.name + " " + (p.description || "")).toLowerCase().includes(query)
+    (p.name + " " + (p.description || "") + " " + (p.category || "Other")).toLowerCase().includes(query) &&
+    (category === "all" || (p.category || "Other") === category)
   );
 
   $("catalogTitle").textContent = shopName || "Your Catalog";
@@ -366,6 +388,7 @@ function render() {
   filtered.forEach(p => {
     const card = element("article", "product");
     if (p.image) { const img = document.createElement("img"); img.src = p.image; img.alt = p.name; img.loading = "lazy"; img.style.cssText = "width:100%;height:150px;object-fit:cover;border-radius:10px;margin-bottom:10px"; img.onerror = () => { img.style.display = "none"; }; card.appendChild(img); }
+    card.appendChild(element("div", "muted", p.category || "Other"));
     card.appendChild(element("h3", "", p.name));
     card.appendChild(element("div", "price", money(p.price)));
     card.appendChild(element("p", "", p.description || "No description"));
@@ -374,6 +397,8 @@ function render() {
     const share = element("button", "", "Share");
     share.addEventListener("click", () => shareProduct(p));
 
+    const addToCart = element("button", "green", "Add to cart");
+    addToCart.addEventListener("click", () => { cart[p.id] = (cart[p.id] || 0) + 1; save(); renderCart(); setStatus(p.name + " added to cart."); });
     const order = element("button", "green", "Order");
     order.title = "Open WhatsApp with a product enquiry";
     order.addEventListener("click", () => orderProduct(p));
@@ -385,7 +410,7 @@ function render() {
       save(); render(); setStatus("Product deleted.");
     });
 
-    actions.append(share, order, del);
+    actions.append(share, addToCart, order, del);
     card.appendChild(actions);
     list.appendChild(card);
   });
@@ -396,6 +421,7 @@ function render() {
     const card = element("article", "preview-card");
     if (p.image) { const img = document.createElement("img"); img.src = p.image; img.alt = p.name; img.loading = "lazy"; img.style.cssText = "width:100%;height:100px;object-fit:cover;border-radius:8px;margin-bottom:8px"; img.onerror = () => { img.style.display = "none"; }; card.appendChild(img); }
     card.appendChild(element("strong", "", p.name));
+    card.appendChild(element("p", "muted", p.category || "Other"));
     card.appendChild(element("p", "", money(p.price)));
     if (p.description) card.appendChild(element("p", "", p.description));
     preview.appendChild(card);
@@ -411,6 +437,7 @@ $("productForm").addEventListener("submit", e => {
   const name = $("productName").value.trim();
   const price = Number($("productPrice").value);
   const description = $("productDescription").value.trim();
+  const category = $("productCategory").value || "Other";
   const image = $("productImage").value.trim();
   if (image && !/^https:\/\//i.test(image)) { setStatus("Image URL must begin with https://."); return; }
 
@@ -422,12 +449,13 @@ $("productForm").addEventListener("submit", e => {
 
   products.unshift({
     id: Date.now().toString() + Math.random().toString(36).slice(2,8),
-    name, price, description, image
+    name, price, description, image, category
   });
   save(); render();
   $("productName").value = "";
   $("productPrice").value = "";
   $("productDescription").value = "";
+  $("productCategory").value = "Gaming";
   $("productImage").value = "";
   $("productName").focus();
   setStatus("Product added.");
@@ -444,19 +472,73 @@ function saveSettings() {
   $(id).addEventListener("change", saveSettings);
 });
 $("search").addEventListener("input", render);
+$("categoryFilter").addEventListener("change", render);
 $("demoBtn").addEventListener("click", () => {
   if (products.length && !confirm("Add demo products to your existing catalog?")) return;
   const demo = [
-    {name:"Classic Notebook",price:99,description:"A handy notebook for school, notes and ideas.",image:"https://images.unsplash.com/photo-1531346878377-a5be20888e57?auto=format&fit=crop&w=900&q=80"},
-    {name:"Everyday Backpack",price:699,description:"A practical backpack for daily use.",image:"https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=900&q=80"},
-    {name:"Wireless Headphones",price:899,description:"Demo listing for headphones. Check real specifications before selling.",image:"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80"},
-    {name:"Water Bottle",price:249,description:"A reusable bottle for everyday hydration.",image:"https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=900&q=80"},
-    {name:"Canvas Tote Bag",price:199,description:"A simple reusable bag for carrying everyday items.",image:"https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=80"}
+    {name:"Classic Notebook",category:"Books & Stationery",price:99,description:"A handy notebook for school, notes and ideas.",image:"https://images.unsplash.com/photo-1531346878377-a5be20888e57?auto=format&fit=crop&w=900&q=80"},
+    {name:"Everyday Backpack",category:"Fashion",price:699,description:"A practical backpack for daily use.",image:"https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=900&q=80"},
+    {name:"Wireless Headphones",category:"Electronics",price:899,description:"Demo listing for headphones. Check real specifications before selling.",image:"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80"},
+    {name:"Water Bottle",category:"Home",price:249,description:"A reusable bottle for everyday hydration.",image:"https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=900&q=80"},
+    {name:"Canvas Tote Bag",category:"Fashion",price:199,description:"A simple reusable bag for carrying everyday items.",image:"https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=80"}
   ];
   demo.forEach((p,i) => products.push({...p,id:"demo-"+Date.now()+"-"+i}));
   save(); render(); setStatus("Demo products added. These are sample listings, not verified offers.");
 });
 $("printBtn").addEventListener("click", () => window.print());
+
+function renderCart() {
+  const box = $("cartItems");
+  box.replaceChildren();
+  let total = 0, count = 0;
+  for (const [id, qty] of Object.entries(cart)) {
+    const p = products.find(item => item.id === id);
+    if (!p || qty < 1) continue;
+    total += p.price * qty; count += qty;
+    const card = element("article", "product");
+    card.appendChild(element("h3", "", p.name));
+    card.appendChild(element("div", "price", money(p.price * qty)));
+    card.appendChild(element("p", "muted", money(p.price) + " each"));
+    const controls = element("div", "actions");
+    const minus = element("button", "", "−");
+    minus.setAttribute("aria-label", "Decrease quantity of " + p.name);
+    minus.addEventListener("click", () => { if (cart[id] <= 1) delete cart[id]; else cart[id]--; save(); renderCart(); });
+    const quantity = element("strong", "", "Qty: " + qty);
+    const plus = element("button", "", "+");
+    plus.setAttribute("aria-label", "Increase quantity of " + p.name);
+    plus.addEventListener("click", () => { cart[id] = Math.min(99, (cart[id] || 0) + 1); save(); renderCart(); });
+    const remove = element("button", "danger", "Remove");
+    remove.addEventListener("click", () => { delete cart[id]; save(); renderCart(); });
+    controls.append(minus, quantity, plus, remove); card.appendChild(controls); box.appendChild(card);
+  }
+  $("cartCount").textContent = count + " item" + (count === 1 ? "" : "s");
+  $("cartTotal").textContent = money(total);
+  if (!count) box.appendChild(element("div", "empty", "Your cart is empty. Click Add to cart on a product."));
+}
+
+$("clearCartBtn").addEventListener("click", () => {
+  if (!Object.keys(cart).length) return;
+  if (!confirm("Remove all items from your cart?")) return;
+  cart = {}; save(); renderCart(); setStatus("Cart cleared. Your catalog products are unchanged.");
+});
+
+$("checkoutBtn").addEventListener("click", () => {
+  const lines = Object.entries(cart).map(([id,qty]) => {
+    const p = products.find(item => item.id === id);
+    return p ? {p,qty} : null;
+  }).filter(Boolean);
+  if (!lines.length) return setStatus("Add a product to your cart first.");
+  const total = lines.reduce((sum,line) => sum + line.p.price * line.qty, 0);
+  const message = [
+    "Hello " + (shopName || "shop") + "! I would like to enquire about this order:",
+    ...lines.map(({p,qty}) => `${qty} × ${p.name} — ${money(p.price * qty)}`),
+    "Estimated item total: " + money(total),
+    "Please confirm availability, delivery charges and payment options."
+  ].join("\n");
+  const number = String(whatsapp || "").replace(/\\D/g, "");
+  const url = number ? "https://wa.me/" + number + "?text=" + encodeURIComponent(message) : "https://wa.me/?text=" + encodeURIComponent(message);
+  window.open(url, "_blank", "noopener,noreferrer");
+});
 
 function catalogText() {
   return [shopName || "My Shop", shopDescription, "",
@@ -534,7 +616,7 @@ $("backupFile").addEventListener("change", async e => {
 
     const valid = data.products.every(p =>
       p && typeof p.id === "string" && typeof p.name === "string" &&
-      typeof p.description === "string" && Number.isFinite(p.price) &&
+      typeof p.description === "string" && (p.category === undefined || typeof p.category === "string") && Number.isFinite(p.price) &&
       p.price >= 0 && p.price <= 10000000 &&
       (p.image === undefined || (typeof p.image === "string" && (!p.image || /^https:\/\//i.test(p.image))))
     );
@@ -575,6 +657,7 @@ function makeStorefront() {
   const safeDescription = escapeHTML(shopDescription || "Welcome to our shop.");
   const safeProducts = products.map(p => {
     const name = escapeHTML(p.name);
+    const category = escapeHTML(p.category || "Other");
     const description = escapeHTML(p.description || "");
     const price = escapeHTML(money(p.price));
     const image = typeof p.image === "string" && /^https:\/\//i.test(p.image) ? '<img class="product-image" src="' + escapeHTML(p.image) + '" alt="' + name + '" loading="lazy">' : "";
@@ -584,7 +667,7 @@ function makeStorefront() {
     const link = whatsapp
       ? `<a class="order" href="https://wa.me/${whatsapp}?text=${message}" target="_blank" rel="noopener noreferrer">Ask about this item</a>`
       : `<a class="order" href="https://wa.me/?text=${message}" target="_blank" rel="noopener noreferrer">Ask about this item</a>`;
-    return `<article class="product">${image}<h2>${name}</h2><div class="price">${price}</div><p>${description}</p>${link}</article>`;
+    return `<article class="product">${image}<div class="category">${category}</div><h2>${name}</h2><div class="price">${price}</div><p>${description}</p>${link}</article>`;
   }).join("\n");
 
   return `<!DOCTYPE html>
@@ -599,7 +682,7 @@ color:white;text-align:center}.hero h1{font-size:clamp(30px,6vw,48px);margin:0 0
 .hero p{max-width:650px;margin:auto;color:#cbd5e1;line-height:1.6}
 main{max-width:1000px;margin:auto;padding:25px 16px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
-.product{background:white;border:1px solid #dbe3ee;border-radius:16px;padding:20px;
+ .category{font-size:12px;color:#64748b;font-weight:700;margin-bottom:8px}.product{background:white;border:1px solid #dbe3ee;border-radius:16px;padding:20px;
 overflow-wrap:anywhere}.product h2{font-size:19px;margin:0 0 12px}.product-image{display:block;width:100%;height:180px;object-fit:cover;border-radius:10px;margin-bottom:14px;background:#e2e8f0}
 .price{font-weight:800;font-size:22px;color:#047857}.product p{color:#475569;line-height:1.6;
 white-space:pre-wrap}.order{display:inline-block;margin-top:8px;background:#047857;
@@ -621,6 +704,7 @@ $("exportStoreBtn").addEventListener("click", () => {
 });
 
 render();
+renderCart();
 </script>
 </body>
 </html>
