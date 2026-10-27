@@ -1,0 +1,469 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b1120">
+<title>MiniCatalog 2.0</title>
+<style>
+:root {
+  --bg:#0b1120; --panel:#121c30; --line:#283750;
+  --text:#f1f5f9; --muted:#9aabc2; --blue:#60a5fa;
+  --green:#34d399;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:system-ui,Arial,sans-serif}
+header{padding:20px 5%;border-bottom:1px solid var(--line);
+  display:flex;justify-content:space-between;align-items:center;gap:12px}
+.logo{font-size:23px;font-weight:850}
+.logo span{color:var(--blue)}
+.tag{font-size:12px;color:var(--muted)}
+main{max-width:1150px;margin:auto;padding:25px 16px}
+h1{font-size:clamp(28px,5vw,42px);margin:0 0 8px}
+h2{font-size:19px;margin:0 0 16px}
+p{color:var(--muted);line-height:1.6}
+.layout{display:grid;grid-template-columns:minmax(250px,330px) 1fr;
+  gap:18px;align-items:start}
+.panel{background:var(--panel);border:1px solid var(--line);
+  border-radius:18px;padding:20px;min-width:0}
+label{display:block;font-size:13px;margin:13px 0 7px}
+input,textarea{width:100%;padding:12px;border-radius:10px;
+  border:1px solid var(--line);background:#0b1425;color:white;
+  font:inherit}
+textarea{resize:vertical;min-height:75px}
+button{border:1px solid var(--line);background:#1c2940;color:white;
+  border-radius:10px;padding:10px 13px;font:inherit;font-weight:650;
+  cursor:pointer}
+button:hover{filter:brightness(1.15)}
+.primary{background:var(--blue);color:#071426;border:0}
+.green{background:var(--green);color:#052219;border:0}
+.danger{color:#fca5a5}
+.full{width:100%;margin-top:15px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.toolbar{display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:12px;margin-bottom:15px}
+.toolbar h2{margin:0}
+.muted,.count{font-size:12px;color:var(--muted)}
+.status{min-height:20px;font-size:13px;color:var(--green)}
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:12px;margin-top:15px}
+.product{border:1px solid var(--line);border-radius:14px;
+  padding:15px;min-width:0;overflow-wrap:anywhere}
+.product h3{font-size:17px;margin:0 0 8px}
+.product p{font-size:13px;white-space:pre-wrap}
+.price{font-size:19px;font-weight:800;color:var(--green)}
+.empty{padding:25px 12px;text-align:center;border:1px dashed var(--line);
+  border-radius:14px;color:var(--muted)}
+.section{margin-top:20px}
+.preview{background:#f8fafc;color:#111827;border-radius:14px;padding:18px}
+.preview h3{margin-top:0}
+.preview p{color:#475569}
+.preview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.preview-card{background:white;border:1px solid #e2e8f0;border-radius:10px;padding:12px;overflow-wrap:anywhere}
+.preview-card p{font-size:13px}
+.note{font-size:12px;color:var(--muted)}
+@media(max-width:760px){.layout{grid-template-columns:1fr}header{padding:16px}}
+@media print{
+  body{background:white;color:black}
+  header,.hero,.form-panel,.toolbar .actions,#search,
+  .section,.product .actions,footer{display:none!important}
+  main{padding:0}.layout{display:block}.panel{background:white;border:0}
+  .products{display:block}.product{break-inside:avoid;border:1px solid #ddd}
+  .product p{color:#333}.price{color:black}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Mini<span>Catalog</span> <small style="font-size:11px">2.0</small></div>
+  <div class="tag">YOUR SHOP. YOUR CATALOG.</div>
+</header>
+
+<main>
+  <section class="hero">
+    <h1>Build your digital shop.</h1>
+    <p>Add products, preview your customer-facing storefront, and export a
+    standalone shop page ready to publish online.</p>
+  </section>
+
+  <div class="layout">
+    <section class="panel form-panel">
+      <h2>Shop settings</h2>
+      <label for="shopName">Shop name</label>
+      <input id="shopName" maxlength="60" placeholder="e.g. Daksha Store">
+
+      <label for="shopDescription">About your shop</label>
+      <textarea id="shopDescription" maxlength="400"
+        placeholder="What makes your shop special?"></textarea>
+
+      <label for="whatsapp">WhatsApp number (optional)</label>
+      <input id="whatsapp" inputmode="numeric" maxlength="15"
+        placeholder="91XXXXXXXXXX">
+      <p class="note">Use country code and digits only, e.g. 91 followed
+      by your number. This number is included in the exported shop page.</p>
+
+      <hr style="border-color:var(--line);margin:22px 0">
+      <h2>Add a product</h2>
+      <form id="productForm">
+        <label for="productName">Product name</label>
+        <input id="productName" maxlength="80" required
+          placeholder="Handmade bracelet">
+
+        <label for="productPrice">Price in ₹</label>
+        <input id="productPrice" type="number" min="0"
+          max="10000000" step="0.01" required placeholder="199">
+
+        <label for="productDescription">Description</label>
+        <textarea id="productDescription" maxlength="400"
+          placeholder="Describe the product"></textarea>
+
+        <button class="primary full" type="submit">+ Add product</button>
+      </form>
+      <p id="status" class="status" aria-live="polite"></p>
+    </section>
+
+    <section class="panel">
+      <div class="toolbar">
+        <div>
+          <h2 id="catalogTitle">Your Catalog</h2>
+          <div id="count" class="count">0 products</div>
+        </div>
+        <div class="actions">
+          <button id="shareBtn" class="green">Share catalog</button>
+          <button id="printBtn">Print / PDF</button>
+        </div>
+      </div>
+
+      <label for="search">Search products</label>
+      <input id="search" placeholder="Find a product">
+
+      <div id="products" class="products"></div>
+
+      <div class="section">
+        <h2>Customer storefront preview</h2>
+        <p class="note">This preview uses your current local products.
+        It is not yet a public website.</p>
+        <div class="preview">
+          <h3 id="previewName">Your Shop</h3>
+          <p id="previewDescription">Your shop description will appear here.</p>
+          <div id="previewProducts" class="preview-grid"></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Publish your storefront</h2>
+        <p>Export a self-contained HTML page containing your shop details
+        and products. Upload that file to a static website host to get a
+        public URL.</p>
+        <div class="actions">
+          <button class="primary" id="exportStoreBtn">Export storefront HTML</button>
+          <button id="exportBtn">Export data backup</button>
+          <button id="importBtn">Import backup</button>
+          <button id="clearBtn" class="danger">Clear catalog</button>
+          <input id="backupFile" type="file" accept=".json,application/json" hidden>
+        </div>
+        <p class="note">Each export is a snapshot. Export again after changing
+        products. Do not include private information in a public storefront.</p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer style="text-align:center;padding:25px;color:var(--muted);font-size:12px">
+  MiniCatalog · Independent prototype
+</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const PRODUCTS_KEY = "minicatalog_products_v1";
+const SHOP_KEY = "minicatalog_shop_v1";
+const DESCRIPTION_KEY = "minicatalog_description_v2";
+const WHATSAPP_KEY = "minicatalog_whatsapp_v2";
+
+let products = [];
+let shopName = "";
+let shopDescription = "";
+let whatsapp = "";
+
+try {
+  const saved = JSON.parse(localStorage.getItem(PRODUCTS_KEY) || "[]");
+  products = Array.isArray(saved) ? saved.filter(p =>
+    p && typeof p.name === "string" &&
+    Number.isFinite(p.price) && typeof p.id === "string"
+  ) : [];
+} catch { products = []; }
+
+shopName = localStorage.getItem(SHOP_KEY) || "";
+shopDescription = localStorage.getItem(DESCRIPTION_KEY) || "";
+whatsapp = localStorage.getItem(WHATSAPP_KEY) || "";
+
+$("shopName").value = shopName;
+$("shopDescription").value = shopDescription;
+$("whatsapp").value = whatsapp;
+
+function save() {
+  localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
+  localStorage.setItem(SHOP_KEY, shopName);
+  localStorage.setItem(DESCRIPTION_KEY, shopDescription);
+  localStorage.setItem(WHATSAPP_KEY, whatsapp);
+}
+
+function money(value) {
+  return new Intl.NumberFormat("en-IN", {
+    style:"currency", currency:"INR", maximumFractionDigits:2
+  }).format(value);
+}
+
+function setStatus(message) {
+  $("status").textContent = message;
+}
+
+function element(tag, className, value) {
+  const el = document.createElement(tag);
+  if (className) el.className = className;
+  if (value !== undefined) el.textContent = value;
+  return el;
+}
+
+function render() {
+  const query = $("search").value.trim().toLowerCase();
+  const filtered = products.filter(p =>
+    (p.name + " " + (p.description || "")).toLowerCase().includes(query)
+  );
+
+  $("catalogTitle").textContent = shopName || "Your Catalog";
+  $("count").textContent = `${filtered.length} product${filtered.length === 1 ? "" : "s"}`;
+  $("previewName").textContent = shopName || "Your Shop";
+  $("previewDescription").textContent =
+    shopDescription || "Welcome to our shop.";
+
+  const list = $("products");
+  list.replaceChildren();
+
+  if (!filtered.length) {
+    list.appendChild(element("div", "empty",
+      products.length ? "No matching products." :
+      "Your catalog is empty. Add your first product."));
+  }
+
+  filtered.forEach(p => {
+    const card = element("article", "product");
+    card.appendChild(element("h3", "", p.name));
+    card.appendChild(element("div", "price", money(p.price)));
+    card.appendChild(element("p", "", p.description || "No description"));
+
+    const actions = element("div", "actions");
+    const share = element("button", "", "Share");
+    share.addEventListener("click", () => shareProduct(p));
+
+    const del = element("button", "danger", "Delete");
+    del.addEventListener("click", () => {
+      if (!confirm(`Delete "${p.name}"?`)) return;
+      products = products.filter(item => item.id !== p.id);
+      save(); render(); setStatus("Product deleted.");
+    });
+
+    actions.append(share, del);
+    card.appendChild(actions);
+    list.appendChild(card);
+  });
+
+  const preview = $("previewProducts");
+  preview.replaceChildren();
+  products.forEach(p => {
+    const card = element("article", "preview-card");
+    card.appendChild(element("strong", "", p.name));
+    card.appendChild(element("p", "", money(p.price)));
+    if (p.description) card.appendChild(element("p", "", p.description));
+    preview.appendChild(card);
+  });
+}
+
+$("productForm").addEventListener("submit", e => {
+  e.preventDefault();
+  shopName = $("shopName").value.trim();
+  shopDescription = $("shopDescription").value.trim();
+  whatsapp = $("whatsapp").value.replace(/\D/g, "");
+
+  const name = $("productName").value.trim();
+  const price = Number($("productPrice").value);
+  const description = $("productDescription").value.trim();
+
+  if (!shopName || !name || !Number.isFinite(price) ||
+      price < 0 || price > 10000000) {
+    setStatus("Enter a shop name, product name and valid price.");
+    return;
+  }
+
+  products.unshift({
+    id: Date.now().toString() + Math.random().toString(36).slice(2,8),
+    name, price, description
+  });
+  save(); render();
+  $("productName").value = "";
+  $("productPrice").value = "";
+  $("productDescription").value = "";
+  $("productName").focus();
+  setStatus("Product added.");
+});
+
+function saveSettings() {
+  shopName = $("shopName").value.trim();
+  shopDescription = $("shopDescription").value.trim();
+  whatsapp = $("whatsapp").value.replace(/\D/g, "").slice(0,15);
+  $("whatsapp").value = whatsapp;
+  save(); render();
+}
+["shopName","shopDescription","whatsapp"].forEach(id => {
+  $(id).addEventListener("change", saveSettings);
+});
+$("search").addEventListener("input", render);
+$("printBtn").addEventListener("click", () => window.print());
+
+function catalogText() {
+  return [shopName || "My Shop", shopDescription, "",
+    ...products.flatMap((p,i) => [
+      `${i+1}. ${p.name} — ${money(p.price)}`,
+      p.description || "", ""
+    ]),
+    "Contact the shop for details."
+  ].filter((line,i,arr) => line !== "" || arr[i-1] !== "").join("\n");
+}
+
+function shareProduct(p) {
+  const message = [
+    shopName || "My Shop", p.name, "Price: " + money(p.price),
+    p.description, "Message us for details."
+  ].filter(Boolean).join("\n");
+  window.open("https://wa.me/?text=" + encodeURIComponent(message),
+    "_blank", "noopener,noreferrer");
+}
+
+$("shareBtn").addEventListener("click", () => {
+  if (!products.length) return setStatus("Add a product before sharing.");
+  window.open("https://wa.me/?text=" + encodeURIComponent(catalogText()),
+    "_blank", "noopener,noreferrer");
+});
+
+function downloadFile(name, content, type) {
+  const blob = new Blob([content], {type});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+$("exportBtn").addEventListener("click", () => {
+  downloadFile("minicatalog-backup.json", JSON.stringify({
+    app:"MiniCatalog", version:2, shopName, shopDescription, whatsapp, products
+  }, null, 2), "application/json");
+  setStatus("Data backup exported.");
+});
+
+$("importBtn").addEventListener("click", () => $("backupFile").click());
+
+$("backupFile").addEventListener("change", async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const data = JSON.parse(await file.text());
+    if (!data || data.app !== "MiniCatalog" ||
+        !Array.isArray(data.products) || data.products.length > 10000)
+      throw new Error("This is not a valid MiniCatalog backup.");
+
+    const valid = data.products.every(p =>
+      p && typeof p.id === "string" && typeof p.name === "string" &&
+      typeof p.description === "string" && Number.isFinite(p.price) &&
+      p.price >= 0 && p.price <= 10000000
+    );
+    if (!valid) throw new Error("The backup contains invalid products.");
+    if (!confirm("Replace the current catalog with this backup?")) return;
+
+    products = data.products;
+    shopName = String(data.shopName || "").slice(0,60);
+    shopDescription = String(data.shopDescription || "").slice(0,400);
+    whatsapp = String(data.whatsapp || "").replace(/\D/g,"").slice(0,15);
+    $("shopName").value = shopName;
+    $("shopDescription").value = shopDescription;
+    $("whatsapp").value = whatsapp;
+    save(); render(); setStatus("Backup imported.");
+  } catch(err) { setStatus(err.message || "Import failed."); }
+  finally { e.target.value = ""; }
+});
+
+$("clearBtn").addEventListener("click", () => {
+  if (!confirm("Delete all products and shop settings from this browser?")) return;
+  products = []; shopName = ""; shopDescription = ""; whatsapp = "";
+  $("shopName").value = "";
+  $("shopDescription").value = "";
+  $("whatsapp").value = "";
+  save(); render(); setStatus("Catalog cleared.");
+});
+
+/* Generate a standalone customer-facing page.
+   All seller-provided text is escaped before inclusion in HTML. */
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, ch => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  })[ch]);
+}
+
+function makeStorefront() {
+  const safeName = escapeHTML(shopName || "My Shop");
+  const safeDescription = escapeHTML(shopDescription || "Welcome to our shop.");
+  const safeProducts = products.map(p => {
+    const name = escapeHTML(p.name);
+    const description = escapeHTML(p.description || "");
+    const price = escapeHTML(money(p.price));
+    const message = encodeURIComponent(
+      `Hello ${shopName || "shop"}, I am interested in ${p.name} (${money(p.price)}).`
+    );
+    const link = whatsapp
+      ? `<a class="order" href="https://wa.me/${whatsapp}?text=${message}" target="_blank" rel="noopener noreferrer">Ask about this item</a>`
+      : `<a class="order" href="https://wa.me/?text=${message}" target="_blank" rel="noopener noreferrer">Ask about this item</a>`;
+    return `<article class="product"><h2>${name}</h2><div class="price">${price}</div><p>${description}</p>${link}</article>`;
+  }).join("\n");
+
+  return `<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="${safeDescription}">
+<title>${safeName} | Shop</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f1f5f9;color:#172033;
+font:16px system-ui,Arial,sans-serif}.hero{padding:42px 18px;background:#101827;
+color:white;text-align:center}.hero h1{font-size:clamp(30px,6vw,48px);margin:0 0 10px}
+.hero p{max-width:650px;margin:auto;color:#cbd5e1;line-height:1.6}
+main{max-width:1000px;margin:auto;padding:25px 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.product{background:white;border:1px solid #dbe3ee;border-radius:16px;padding:20px;
+overflow-wrap:anywhere}.product h2{font-size:19px;margin:0 0 12px}
+.price{font-weight:800;font-size:22px;color:#047857}.product p{color:#475569;line-height:1.6;
+white-space:pre-wrap}.order{display:inline-block;margin-top:8px;background:#047857;
+color:white;text-decoration:none;padding:10px 13px;border-radius:9px}
+.empty{color:#64748b;text-align:center;padding:35px}
+footer{text-align:center;color:#64748b;padding:25px;font-size:12px}
+</style></head><body>
+<header class="hero"><h1>${safeName}</h1><p>${safeDescription}</p></header>
+<main><div class="grid">${safeProducts || '<div class="empty">Products coming soon.</div>'}</div></main>
+<footer>Contact the seller for availability, delivery and payment details.</footer>
+</body></html>`;
+}
+
+$("exportStoreBtn").addEventListener("click", () => {
+  saveSettings();
+  if (!products.length && !confirm("Export a storefront with no products?")) return;
+  downloadFile("storefront.html", makeStorefront(), "text/html;charset=utf-8");
+  setStatus("Storefront exported. Open storefront.html to preview it.");
+});
+
+render();
+</script>
+</body>
+</html>
