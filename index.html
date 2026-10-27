@@ -73,6 +73,117 @@ button:hover{filter:brightness(1.15)}
   .products{display:block}.product{break-inside:avoid;border:1px solid #ddd}
   .product p{color:#333}.price{color:black}
 }
+
+/* MiniCatalog premium visual refresh — functionality and saved-data keys unchanged */
+:root{
+  --bg:#070b16;--panel:#10182b;--line:#263653;--text:#f4f7ff;
+  --muted:#a4b2ca;--blue:#8b9cff;--green:#42e6b2;
+  --accent:#a78bfa;--glow:rgba(139,156,255,.18)
+}
+html{scroll-behavior:smooth}
+body{
+  background:
+    radial-gradient(ellipse at 12% -5%,rgba(124,92,255,.20),transparent 36rem),
+    radial-gradient(ellipse at 95% 15%,rgba(34,211,238,.10),transparent 30rem),
+    var(--bg);
+  letter-spacing:.01em
+}
+header{
+  position:sticky;top:0;z-index:10;
+  background:rgba(7,11,22,.82);backdrop-filter:blur(18px);
+  border-bottom:1px solid rgba(139,156,255,.20);
+  box-shadow:0 8px 32px rgba(0,0,0,.18)
+}
+.logo{letter-spacing:-.045em;font-size:25px}
+.logo span{
+  background:linear-gradient(100deg,#9baaff,#67e8f9);
+  -webkit-background-clip:text;background-clip:text;color:transparent
+}
+.tag{letter-spacing:.14em;text-transform:uppercase;font-weight:750}
+main{padding-top:34px;padding-bottom:44px}
+.hero{
+  position:relative;overflow:hidden;padding:clamp(25px,5vw,46px);
+  margin-bottom:24px;border:1px solid rgba(139,156,255,.25);
+  border-radius:26px;
+  background:linear-gradient(120deg,rgba(24,34,62,.96),rgba(13,25,43,.88));
+  box-shadow:0 22px 70px rgba(0,0,0,.22)
+}
+.hero:after{
+  content:"";position:absolute;width:230px;height:230px;right:-75px;top:-105px;
+  border-radius:50%;border:1px solid rgba(103,232,249,.30);
+  box-shadow:0 0 0 28px rgba(103,232,249,.035),0 0 0 58px rgba(167,139,250,.035);
+  pointer-events:none
+}
+.hero h1{letter-spacing:-.055em;line-height:1.08;max-width:760px}
+.hero p{max-width:690px;margin-bottom:0;font-size:15px}
+.layout{gap:20px}
+.panel{
+  background:linear-gradient(155deg,rgba(17,27,48,.98),rgba(12,20,36,.98));
+  border-color:rgba(137,159,199,.20);border-radius:22px;padding:clamp(17px,2.5vw,24px);
+  box-shadow:0 16px 48px rgba(0,0,0,.17)
+}
+.panel h2{letter-spacing:-.025em}
+label{font-weight:700;color:#dbe6ff}
+input,textarea{
+  background:rgba(5,11,24,.72);border-color:#2b3b5c;border-radius:12px;
+  transition:border-color .18s,box-shadow .18s,background .18s
+}
+input:focus,textarea:focus{
+  outline:none;border-color:#9baaff;background:#0a1428;
+  box-shadow:0 0 0 3px rgba(139,156,255,.16)
+}
+button{
+  border-color:#344564;background:linear-gradient(135deg,#1b2944,#172238);
+  transition:transform .16s,border-color .16s,filter .16s,box-shadow .16s
+}
+button:hover{filter:brightness(1.13);border-color:#8298c5;transform:translateY(-1px)}
+button:active{transform:translateY(0)}
+button:focus-visible{outline:2px solid #a5b4fc;outline-offset:3px}
+button.primary{
+  background:linear-gradient(110deg,#a5b4fc,#67e8f9);color:#091326;
+  box-shadow:0 8px 24px rgba(103,232,249,.12)
+}
+button.green{
+  background:linear-gradient(110deg,#6ee7b7,#34d399);color:#06251d;
+  box-shadow:0 8px 24px rgba(52,211,153,.12)
+}
+button.danger{border-color:rgba(248,113,113,.35);background:rgba(127,29,29,.17);color:#fda4af}
+.full{min-height:44px}
+.toolbar{align-items:flex-start}
+.count{margin-top:5px}
+.status{font-weight:650}
+.products{gap:15px}
+.product{
+  position:relative;background:linear-gradient(155deg,rgba(19,30,52,.96),rgba(12,20,36,.96));
+  border-color:rgba(137,159,199,.23);border-radius:18px;padding:14px;
+  transition:transform .18s,border-color .18s,box-shadow .18s
+}
+.product:hover{transform:translateY(-3px);border-color:rgba(139,156,255,.65);box-shadow:0 16px 32px rgba(0,0,0,.18)}
+.product img{display:block;background:#17243b}
+.product h3{letter-spacing:-.02em;line-height:1.35}
+.product p{min-height:38px}
+.price{letter-spacing:-.025em}
+.product .actions{margin-top:12px}
+.product .actions button{flex:1}
+.empty{background:rgba(8,14,27,.45);border-color:#334565;padding:32px 14px}
+.preview{box-shadow:inset 0 0 0 1px rgba(15,23,42,.04)}
+.preview-card{box-shadow:0 5px 15px rgba(15,23,42,.05)}
+.section{padding-top:2px}
+.section h2{margin-bottom:10px}
+.note{line-height:1.55}
+hr{opacity:.7}
+footer{letter-spacing:.04em}
+@media(max-width:760px){
+  main{padding:20px 12px 34px}
+  .hero{border-radius:20px;padding:25px 20px}
+  .panel{border-radius:18px}
+  header{gap:8px}
+  .tag{font-size:10px;letter-spacing:.08em;text-align:right}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
+}
+
 </style>
 </head>
 <body>
