@@ -407,7 +407,8 @@ function render() {
     del.addEventListener("click", () => {
       if (!confirm(`Delete "${p.name}"?`)) return;
       products = products.filter(item => item.id !== p.id);
-      save(); render(); setStatus("Product deleted.");
+      delete cart[p.id];
+      save(); render(); renderCart(); setStatus("Product deleted.");
     });
 
     actions.append(share, addToCart, order, del);
@@ -535,7 +536,7 @@ $("checkoutBtn").addEventListener("click", () => {
     "Estimated item total: " + money(total),
     "Please confirm availability, delivery charges and payment options."
   ].join("\n");
-  const number = String(whatsapp || "").replace(/\\D/g, "");
+  const number = String(whatsapp || "").replace(/\D/g, "");
   const url = number ? "https://wa.me/" + number + "?text=" + encodeURIComponent(message) : "https://wa.me/?text=" + encodeURIComponent(message);
   window.open(url, "_blank", "noopener,noreferrer");
 });
@@ -624,24 +625,25 @@ $("backupFile").addEventListener("change", async e => {
     if (!confirm("Replace the current catalog with this backup?")) return;
 
     products = data.products;
+    cart = Object.fromEntries(Object.entries(cart).filter(([id]) => products.some(p => p.id === id)));
     shopName = String(data.shopName || "").slice(0,60);
     shopDescription = String(data.shopDescription || "").slice(0,400);
     whatsapp = String(data.whatsapp || "").replace(/\D/g,"").slice(0,15);
     $("shopName").value = shopName;
     $("shopDescription").value = shopDescription;
     $("whatsapp").value = whatsapp;
-    save(); render(); setStatus("Backup imported.");
+    save(); render(); renderCart(); setStatus("Backup imported.");
   } catch(err) { setStatus(err.message || "Import failed."); }
   finally { e.target.value = ""; }
 });
 
 $("clearBtn").addEventListener("click", () => {
   if (!confirm("Delete all products and shop settings from this browser?")) return;
-  products = []; shopName = ""; shopDescription = ""; whatsapp = "";
+  products = []; cart = {}; shopName = ""; shopDescription = ""; whatsapp = "";
   $("shopName").value = "";
   $("shopDescription").value = "";
   $("whatsapp").value = "";
-  save(); render(); setStatus("Catalog cleared.");
+  save(); render(); renderCart(); setStatus("Catalog cleared.");
 });
 
 /* Generate a standalone customer-facing page.
