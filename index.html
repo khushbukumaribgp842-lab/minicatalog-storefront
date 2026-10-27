@@ -119,7 +119,11 @@ button:hover{filter:brightness(1.15)}
         <textarea id="productDescription" maxlength="400"
           placeholder="Describe the product"></textarea>
 
-        <button class="primary full" type="submit">+ Add product</button>
+        <label for="productImage">Product image URL (optional)</label>
+      <input id="productImage" type="url" placeholder="https://example.com/image.jpg">
+      <p class="note">Use a direct image URL beginning with https://. Click Load demo products to try sample images.</p>
+      <button class="primary full" type="submit">+ Add product</button>
+      <button id="demoBtn" class="full" type="button">Load demo products</button>
       </form>
       <p id="status" class="status" aria-live="polite"></p>
     </section>
@@ -250,6 +254,7 @@ function render() {
 
   filtered.forEach(p => {
     const card = element("article", "product");
+    if (p.image) { const img = document.createElement("img"); img.src = p.image; img.alt = p.name; img.loading = "lazy"; img.style.cssText = "width:100%;height:150px;object-fit:cover;border-radius:10px;margin-bottom:10px"; img.onerror = () => { img.style.display = "none"; }; card.appendChild(img); }
     card.appendChild(element("h3", "", p.name));
     card.appendChild(element("div", "price", money(p.price)));
     card.appendChild(element("p", "", p.description || "No description"));
@@ -274,6 +279,7 @@ function render() {
   preview.replaceChildren();
   products.forEach(p => {
     const card = element("article", "preview-card");
+    if (p.image) { const img = document.createElement("img"); img.src = p.image; img.alt = p.name; img.loading = "lazy"; img.style.cssText = "width:100%;height:100px;object-fit:cover;border-radius:8px;margin-bottom:8px"; img.onerror = () => { img.style.display = "none"; }; card.appendChild(img); }
     card.appendChild(element("strong", "", p.name));
     card.appendChild(element("p", "", money(p.price)));
     if (p.description) card.appendChild(element("p", "", p.description));
@@ -290,6 +296,8 @@ $("productForm").addEventListener("submit", e => {
   const name = $("productName").value.trim();
   const price = Number($("productPrice").value);
   const description = $("productDescription").value.trim();
+  const image = $("productImage").value.trim();
+  if (image && !/^https:\/\//i.test(image)) { setStatus("Image URL must begin with https://."); return; }
 
   if (!shopName || !name || !Number.isFinite(price) ||
       price < 0 || price > 10000000) {
@@ -299,12 +307,13 @@ $("productForm").addEventListener("submit", e => {
 
   products.unshift({
     id: Date.now().toString() + Math.random().toString(36).slice(2,8),
-    name, price, description
+    name, price, description, image
   });
   save(); render();
   $("productName").value = "";
   $("productPrice").value = "";
   $("productDescription").value = "";
+  $("productImage").value = "";
   $("productName").focus();
   setStatus("Product added.");
 });
@@ -320,6 +329,18 @@ function saveSettings() {
   $(id).addEventListener("change", saveSettings);
 });
 $("search").addEventListener("input", render);
+$("demoBtn").addEventListener("click", () => {
+  if (products.length && !confirm("Add demo products to your existing catalog?")) return;
+  const demo = [
+    {name:"Classic Notebook",price:99,description:"A handy notebook for school, notes and ideas.",image:"https://images.unsplash.com/photo-1531346878377-a5be20888e57?auto=format&fit=crop&w=900&q=80"},
+    {name:"Everyday Backpack",price:699,description:"A practical backpack for daily use.",image:"https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=900&q=80"},
+    {name:"Wireless Headphones",price:899,description:"Demo listing for headphones. Check real specifications before selling.",image:"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80"},
+    {name:"Water Bottle",price:249,description:"A reusable bottle for everyday hydration.",image:"https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=900&q=80"},
+    {name:"Canvas Tote Bag",price:199,description:"A simple reusable bag for carrying everyday items.",image:"https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=80"}
+  ];
+  demo.forEach((p,i) => products.push({...p,id:"demo-"+Date.now()+"-"+i}));
+  save(); render(); setStatus("Demo products added. These are sample listings, not verified offers.");
+});
 $("printBtn").addEventListener("click", () => window.print());
 
 function catalogText() {
@@ -380,7 +401,8 @@ $("backupFile").addEventListener("change", async e => {
     const valid = data.products.every(p =>
       p && typeof p.id === "string" && typeof p.name === "string" &&
       typeof p.description === "string" && Number.isFinite(p.price) &&
-      p.price >= 0 && p.price <= 10000000
+      p.price >= 0 && p.price <= 10000000 &&
+      (p.image === undefined || (typeof p.image === "string" && (!p.image || /^https:\/\//i.test(p.image))))
     );
     if (!valid) throw new Error("The backup contains invalid products.");
     if (!confirm("Replace the current catalog with this backup?")) return;
@@ -421,13 +443,14 @@ function makeStorefront() {
     const name = escapeHTML(p.name);
     const description = escapeHTML(p.description || "");
     const price = escapeHTML(money(p.price));
+    const image = typeof p.image === "string" && /^https:\/\//i.test(p.image) ? '<img class="product-image" src="' + escapeHTML(p.image) + '" alt="' + name + '" loading="lazy">' : "";
     const message = encodeURIComponent(
       `Hello ${shopName || "shop"}, I am interested in ${p.name} (${money(p.price)}).`
     );
     const link = whatsapp
       ? `<a class="order" href="https://wa.me/${whatsapp}?text=${message}" target="_blank" rel="noopener noreferrer">Ask about this item</a>`
       : `<a class="order" href="https://wa.me/?text=${message}" target="_blank" rel="noopener noreferrer">Ask about this item</a>`;
-    return `<article class="product"><h2>${name}</h2><div class="price">${price}</div><p>${description}</p>${link}</article>`;
+    return `<article class="product">${image}<h2>${name}</h2><div class="price">${price}</div><p>${description}</p>${link}</article>`;
   }).join("\n");
 
   return `<!DOCTYPE html>
@@ -443,7 +466,7 @@ color:white;text-align:center}.hero h1{font-size:clamp(30px,6vw,48px);margin:0 0
 main{max-width:1000px;margin:auto;padding:25px 16px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
 .product{background:white;border:1px solid #dbe3ee;border-radius:16px;padding:20px;
-overflow-wrap:anywhere}.product h2{font-size:19px;margin:0 0 12px}
+overflow-wrap:anywhere}.product h2{font-size:19px;margin:0 0 12px}.product-image{display:block;width:100%;height:180px;object-fit:cover;border-radius:10px;margin-bottom:14px;background:#e2e8f0}
 .price{font-weight:800;font-size:22px;color:#047857}.product p{color:#475569;line-height:1.6;
 white-space:pre-wrap}.order{display:inline-block;margin-top:8px;background:#047857;
 color:white;text-decoration:none;padding:10px 13px;border-radius:9px}
