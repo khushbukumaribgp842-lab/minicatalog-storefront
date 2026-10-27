@@ -374,6 +374,10 @@ function render() {
     const share = element("button", "", "Share");
     share.addEventListener("click", () => shareProduct(p));
 
+    const order = element("button", "green", "Order");
+    order.title = "Open WhatsApp with a product enquiry";
+    order.addEventListener("click", () => orderProduct(p));
+
     const del = element("button", "danger", "Delete");
     del.addEventListener("click", () => {
       if (!confirm(`Delete "${p.name}"?`)) return;
@@ -381,7 +385,7 @@ function render() {
       save(); render(); setStatus("Product deleted.");
     });
 
-    actions.append(share, del);
+    actions.append(share, order, del);
     card.appendChild(actions);
     list.appendChild(card);
   });
@@ -462,6 +466,25 @@ function catalogText() {
     ]),
     "Contact the shop for details."
   ].filter((line,i,arr) => line !== "" || arr[i-1] !== "").join("\n");
+}
+
+function productEnquiryMessage(p) {
+  return [
+    "Hello " + (shopName || "shop") + "!",
+    "I am interested in: " + p.name,
+    "Price: " + money(p.price),
+    p.description ? "Details: " + p.description : "",
+    "Is this item available?"
+  ].filter(Boolean).join("\n");
+}
+
+function orderProduct(p) {
+  const message = encodeURIComponent(productEnquiryMessage(p));
+  const number = String(whatsapp || "").replace(/\D/g, "");
+  const destination = number
+    ? "https://wa.me/" + number + "?text=" + message
+    : "https://wa.me/?text=" + message;
+  window.open(destination, "_blank", "noopener,noreferrer");
 }
 
 function shareProduct(p) {
