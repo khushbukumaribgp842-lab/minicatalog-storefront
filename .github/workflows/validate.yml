@@ -72,5 +72,13 @@ jobs:
               raise SystemExit("Demo button does not skip products already in the catalog.")
           if 'category:seed.category' not in html:
               raise SystemExit("Known demo product categories are not restored.")
+          if 'name:"Gaming Mouse",category:"Gaming",price:900,description:""' not in html:
+              raise SystemExit("Gaming Mouse demo category migration is missing.")
+          if 'product.name.match(/^(.*) \\(Copy\\)$/i)' not in html:
+              raise SystemExit("Copied built-in demo cleanup is missing.")
+          if 'img.alt = p.name' in html:
+              raise SystemExit("Product image alt text may duplicate the visible product title.")
+          if html.count('img.alt = ""; img.setAttribute("aria-hidden", "true")') != 2:
+              raise SystemExit("Both catalog and preview images should be decorative to avoid duplicate labels.")
           print("Demo deduplication, category migration and preview rendering checks passed.")
           PY
