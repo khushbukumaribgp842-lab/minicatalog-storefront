@@ -800,7 +800,7 @@ const ratingKey="minicatalog_customer_ratings_v1";let customerRatings={};
 try{customerRatings=JSON.parse(localStorage.getItem(ratingKey)||"{}")||{};}catch{}
 document.querySelectorAll("[data-product][data-rating]").forEach(button=>button.addEventListener("click",()=>{
  const id=button.getAttribute("data-product"),value=Number(button.getAttribute("data-rating"));if(!id||value<1||value>5)return;
- customerRatings[id]=value;localStorage.setItem(ratingKey,JSON.stringify(customerRatings));
+ customerRatings[id]=value;try{localStorage.setItem(ratingKey,JSON.stringify(customerRatings));}catch{}
  const result=[...document.querySelectorAll("[data-result]")].find(el=>el.getAttribute("data-result")===id);if(result)result.textContent="Your rating: "+value+"/5 (saved on this device)";
 }));
 document.querySelectorAll("[data-result]").forEach(el=>{const v=customerRatings[el.getAttribute("data-result")];if(v)el.textContent="Your rating: "+v+"/5 (saved on this device)";});
@@ -811,7 +811,7 @@ document.querySelectorAll(".product").forEach(card=>{
  const saveBtn=document.createElement("button");saveBtn.type="button";saveBtn.className="save-item";
  const id=card.querySelector("[data-product]")?.getAttribute("data-product")||title.textContent;
  const update=()=>{saveBtn.textContent=savedItems.includes(id)?"♥ Saved":"♡ Save item";};
- update();saveBtn.addEventListener("click",()=>{savedItems=savedItems.includes(id)?savedItems.filter(x=>x!==id):[...savedItems,id];localStorage.setItem(savedKey,JSON.stringify(savedItems));update();});
+ update();saveBtn.addEventListener("click",()=>{savedItems=savedItems.includes(id)?savedItems.filter(x=>x!==id):[...savedItems,id];try{localStorage.setItem(savedKey,JSON.stringify(savedItems));}catch{}update();});
  const order=card.querySelector(".order");if(order)order.insertAdjacentElement("beforebegin",saveBtn);
 });
 const grid=document.getElementById("shopGrid");
