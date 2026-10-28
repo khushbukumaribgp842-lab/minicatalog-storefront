@@ -186,6 +186,28 @@ footer{letter-spacing:.04em}
   header{gap:8px}
   .tag{font-size:10px;letter-spacing:.08em;text-align:right}
 }
+.appearance-tools{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.appearance-tools h3{font-size:15px;margin:0 0 8px}
+.control-select{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:#0b1425;color:white;font:inherit;min-width:0}
+.filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px}
+body[data-theme="ocean"]{--bg:#071521;--panel:#0c2333;--line:#24516a;--text:#effaff;--muted:#a6c7d8;--blue:#67d5ff;--green:#67e8c4}
+body[data-theme="ocean"] .hero{background:linear-gradient(120deg,#0d3348,#102438);border-color:#27627b}
+body[data-theme="ocean"] .panel,body[data-theme="ocean"] .product{background:linear-gradient(155deg,#0e293a,#0a1c2a);border-color:#24516a}
+body[data-theme="ocean"] button.primary{background:linear-gradient(110deg,#67d5ff,#7cf0df);color:#06202b}
+body[data-theme="emerald"]{--bg:#071710;--panel:#10251c;--line:#285340;--text:#f0fff5;--muted:#a8c9b5;--blue:#86efac;--green:#5ee6a8}
+body[data-theme="emerald"] .hero{background:linear-gradient(120deg,#153d2a,#10251c);border-color:#347753}
+body[data-theme="emerald"] .panel,body[data-theme="emerald"] .product{background:linear-gradient(155deg,#142b20,#0d1e16);border-color:#285340}
+body[data-theme="emerald"] button.primary{background:linear-gradient(110deg,#86efac,#5ee6a8);color:#092416}
+body[data-theme="sunset"]{--bg:#1b0d16;--panel:#2b1724;--line:#5b3044;--text:#fff5f7;--muted:#e0b9c5;--blue:#fda4af;--green:#fdba74}
+body[data-theme="sunset"] .hero{background:linear-gradient(120deg,#54263c,#2b1724);border-color:#754158}
+body[data-theme="sunset"] .panel,body[data-theme="sunset"] .product{background:linear-gradient(155deg,#321b2a,#24131e);border-color:#5b3044}
+body[data-theme="sunset"] button.primary{background:linear-gradient(110deg,#fda4af,#fdba74);color:#31121d}
+body[data-density="compact"] .products{grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:9px}
+body[data-density="compact"] .product{padding:10px;border-radius:13px}
+body[data-density="compact"] .product p{min-height:0;margin:7px 0}
+body[data-density="compact"] .product .actions{gap:5px}
+body[data-density="compact"] .product .actions button{padding:8px;font-size:12px}
+@media(max-width:520px){.filter-grid{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
 }
@@ -220,6 +242,20 @@ footer{letter-spacing:.04em}
         placeholder="91XXXXXXXXXX">
       <p class="note">Use country code and digits only, e.g. 91 followed
       by your number. This number is included in the exported shop page.</p>
+
+      <div class="appearance-tools">
+        <h3>Customize your design</h3>
+        <label for="themeSelect">Color theme</label>
+        <select id="themeSelect" class="control-select">
+          <option value="violet">Midnight Violet</option><option value="ocean">Ocean Blue</option>
+          <option value="emerald">Emerald Studio</option><option value="sunset">Sunset Coral</option>
+        </select>
+        <label for="densitySelect">Catalog layout</label>
+        <select id="densitySelect" class="control-select">
+          <option value="comfortable">Comfortable cards</option><option value="compact">Compact grid</option>
+        </select>
+        <p class="note">Your choices are saved on this device and included in the next storefront export.</p>
+      </div>
 
       <hr style="border-color:var(--line);margin:22px 0">
       <h2>Add a product</h2>
@@ -263,10 +299,20 @@ footer{letter-spacing:.04em}
 
       <label for="search">Search products</label>
       <input id="search" placeholder="Find a product">
-      <label for="categoryFilter">Filter by category</label>
-      <select id="categoryFilter" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:#0b1425;color:white;font:inherit">
-        <option value="all">All categories</option><option>Gaming</option><option>Electronics</option><option>Fashion</option><option>Home</option><option>Books & Stationery</option><option>Beauty</option><option>Sports</option><option>Accessories</option><option>Other</option>
-      </select>
+      <div class="filter-grid">
+        <div><label for="categoryFilter">Filter by category</label>
+          <select id="categoryFilter" class="control-select">
+            <option value="all">All categories</option><option>Gaming</option><option>Electronics</option><option>Fashion</option><option>Home</option><option>Books & Stationery</option><option>Beauty</option><option>Sports</option><option>Accessories</option><option>Other</option>
+          </select>
+        </div>
+        <div><label for="sortBy">Sort products</label>
+          <select id="sortBy" class="control-select">
+            <option value="featured">Featured / newest first</option><option value="price-low">Price: low to high</option>
+            <option value="price-high">Price: high to low</option><option value="name">Name: A to Z</option>
+            <option value="stock-low">Stock: low to high</option>
+          </select>
+        </div>
+      </div>
       <div class="section" id="dashboard">
         <h2>Store dashboard</h2><p class="note">Inventory and sales you record manually in this browser. WhatsApp enquiries are not automatically confirmed sales.</p>
         <div class="stats-grid">
@@ -325,6 +371,15 @@ const WHATSAPP_KEY = "minicatalog_whatsapp_v2";
 const CART_KEY = "minicatalog_cart_v1";
 const SALES_KEY = "minicatalog_sales_v1";
 const RATINGS_KEY = "minicatalog_ratings_v1";
+const THEME_KEY = "minicatalog_theme_v1";
+const DENSITY_KEY = "minicatalog_density_v1";
+let themeName = "violet", layoutDensity = "comfortable";
+try {
+  const savedTheme = localStorage.getItem(THEME_KEY);
+  const savedDensity = localStorage.getItem(DENSITY_KEY);
+  if (["violet","ocean","emerald","sunset"].includes(savedTheme)) themeName = savedTheme;
+  if (["comfortable","compact"].includes(savedDensity)) layoutDensity = savedDensity;
+} catch {}
 let sales = [], ratings = {};
 try { const v=JSON.parse(localStorage.getItem(SALES_KEY)||"[]"); sales=Array.isArray(v)?v.filter(s=>s&&typeof s.name==="string"&&Number.isFinite(s.total)&&Number.isFinite(s.qty)):[]; } catch {}
 try { const v=JSON.parse(localStorage.getItem(RATINGS_KEY)||"{}"); ratings=v&&typeof v==="object"&&!Array.isArray(v)?v:{}; } catch {}
@@ -358,8 +413,33 @@ for (const id of Object.keys(cart)) {
 $("shopName").value = shopName;
 $("shopDescription").value = shopDescription;
 $("whatsapp").value = whatsapp;
+$("themeSelect").value = themeName;
+$("densitySelect").value = layoutDensity;
+document.body.dataset.theme = themeName;
+document.body.dataset.density = layoutDensity;
 
 let storageWarning = false;
+function applyAppearance() {
+  document.body.dataset.theme = themeName;
+  document.body.dataset.density = layoutDensity;
+  try {
+    localStorage.setItem(THEME_KEY, themeName);
+    localStorage.setItem(DENSITY_KEY, layoutDensity);
+  } catch (error) {
+    storageWarning = true;
+    console.warn("MiniCatalog could not save appearance preferences:", error);
+  }
+}
+$("themeSelect").addEventListener("change", () => {
+  themeName = $("themeSelect").value;
+  applyAppearance();
+  setStatus("Color theme updated. Export your storefront to publish this look.");
+});
+$("densitySelect").addEventListener("change", () => {
+  layoutDensity = $("densitySelect").value;
+  applyAppearance();
+  setStatus("Catalog layout updated.");
+});
 function save() {
   try {
     localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
@@ -409,10 +489,16 @@ function element(tag, className, value) {
 function render() {
   const query = $("search").value.trim().toLowerCase();
   const category = $("categoryFilter").value;
+  const sort = $("sortBy").value;
   const filtered = products.filter(p =>
     (p.name + " " + (p.description || "") + " " + (p.category || "Other")).toLowerCase().includes(query) &&
     (category === "all" || (p.category || "Other") === category)
   );
+  filtered.sort((a,b) => sort === "price-low" ? a.price-b.price
+    : sort === "price-high" ? b.price-a.price
+    : sort === "name" ? a.name.localeCompare(b.name)
+    : sort === "stock-low" ? (a.stock ?? 10)-(b.stock ?? 10)
+    : products.indexOf(a)-products.indexOf(b));
 
   $("catalogTitle").textContent = shopName || "Your Catalog";
   $("count").textContent = `${filtered.length} product${filtered.length === 1 ? "" : "s"}`;
@@ -548,6 +634,7 @@ function saveSettings() {
 });
 $("search").addEventListener("input", render);
 $("categoryFilter").addEventListener("change", render);
+$("sortBy").addEventListener("change", render);
 $("demoBtn").addEventListener("click", () => {
   try {
     if (products.length && !confirm("Add demo products to your existing catalog?")) return;
@@ -694,7 +781,7 @@ function downloadFile(name, content, type) {
 
 $("exportBtn").addEventListener("click", () => {
   downloadFile("minicatalog-backup.json", JSON.stringify({
-    app:"MiniCatalog", version:3, shopName, shopDescription, whatsapp, products, sales, ratings
+    app:"MiniCatalog", version:4, shopName, shopDescription, whatsapp, products, sales, ratings, themeName, layoutDensity
   }, null, 2), "application/json");
   setStatus("Data backup exported.");
 });
@@ -722,6 +809,9 @@ $("backupFile").addEventListener("change", async e => {
     products = data.products.map(p => ({...p,stock:Number.isInteger(p.stock)&&p.stock>=0?p.stock:10}));
     if(Array.isArray(data.sales))sales=data.sales.filter(s=>s&&typeof s.name==="string"&&Number.isFinite(s.total)&&Number.isFinite(s.qty));
     if(data.ratings&&typeof data.ratings==="object"&&!Array.isArray(data.ratings))ratings=data.ratings;
+    if(["violet","ocean","emerald","sunset"].includes(data.themeName)){themeName=data.themeName;$("themeSelect").value=themeName;}
+    if(["comfortable","compact"].includes(data.layoutDensity)){layoutDensity=data.layoutDensity;$("densitySelect").value=layoutDensity;}
+    applyAppearance();
     cart = Object.fromEntries(Object.entries(cart).filter(([id]) => products.some(p => p.id === id && (cart[id]||0)<=p.stock)));
     shopName = String(data.shopName || "").slice(0,60);
     shopDescription = String(data.shopDescription || "").slice(0,400);
@@ -791,7 +881,24 @@ white-space:pre-wrap}.order{display:inline-block;margin-top:8px;background:#0478
 color:white;text-decoration:none;padding:10px 13px;border-radius:9px}
 .empty{color:#64748b;text-align:center;padding:35px}
 footer{text-align:center;color:#64748b;padding:25px;font-size:12px}
-</style></head><body>
+body[data-theme="ocean"]{background:#071521;color:#effaff}
+body[data-theme="ocean"] .hero{background:#0d3348}
+body[data-theme="ocean"] .product{background:#0e293a;border-color:#24516a;color:#effaff}
+body[data-theme="ocean"] .product p{color:#a6c7d8}
+body[data-theme="ocean"] .price{color:#67e8c4}
+body[data-theme="emerald"]{background:#071710;color:#f0fff5}
+body[data-theme="emerald"] .hero{background:#153d2a}
+body[data-theme="emerald"] .product{background:#142b20;border-color:#285340;color:#f0fff5}
+body[data-theme="emerald"] .product p{color:#a8c9b5}
+body[data-theme="emerald"] .price{color:#5ee6a8}
+body[data-theme="sunset"]{background:#1b0d16;color:#fff5f7}
+body[data-theme="sunset"] .hero{background:#54263c}
+body[data-theme="sunset"] .product{background:#321b2a;border-color:#5b3044;color:#fff5f7}
+body[data-theme="sunset"] .product p{color:#e0b9c5}
+body[data-theme="sunset"] .price{color:#fdba74}
+body[data-density="compact"] .grid{grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+body[data-density="compact"] .product{padding:13px}
+</style></head><body data-theme="${themeName}" data-density="${layoutDensity}">
 <header class="hero"><h1>${safeName}</h1><p>${safeDescription}</p></header>
 <main><section class="tools"><input id="shopSearch" type="search" placeholder="Search products..." aria-label="Search products"><select id="shopCategory" aria-label="Filter by category"><option value="">All categories</option>${[...new Set(products.map(p=>p.category||"Other"))].map(cat=>`<option value="${escapeHTML(cat)}">${escapeHTML(cat)}</option>`).join("")}</select><select id="shopSort" aria-label="Sort products"><option value="featured">Featured</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option><option value="name">Name: A to Z</option></select><button type="button" id="showSaved">Saved items ♥</button><span id="resultCount"></span></section><div class="grid" id="shopGrid">${safeProducts || '<div class="empty">Products coming soon.</div>'}</div></main>
 <footer>Contact the seller for availability, delivery and payment details.</footer>
