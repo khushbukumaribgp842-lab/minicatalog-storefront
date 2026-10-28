@@ -532,16 +532,31 @@ function saveSettings() {
 $("search").addEventListener("input", render);
 $("categoryFilter").addEventListener("change", render);
 $("demoBtn").addEventListener("click", () => {
-  if (products.length && !confirm("Add demo products to your existing catalog?")) return;
-  const demo = [
-    {name:"Classic Notebook",category:"Books & Stationery",price:99,description:"A handy notebook for school, notes and ideas.",image:"https://images.unsplash.com/photo-1531346878377-a5be20888e57?auto=format&fit=crop&w=900&q=80"},
-    {name:"Everyday Backpack",category:"Fashion",price:699,description:"A practical backpack for daily use.",image:"https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=900&q=80"},
-    {name:"Wireless Headphones",category:"Electronics",price:899,description:"Demo listing for headphones. Check real specifications before selling.",image:"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80"},
-    {name:"Water Bottle",category:"Home",price:249,description:"A reusable bottle for everyday hydration.",image:"https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=900&q=80"},
-    {name:"Canvas Tote Bag",category:"Fashion",price:199,description:"A simple reusable bag for carrying everyday items.",image:"https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=80"}
-  ];
-  demo.forEach((p,i) => products.push({...p,id:"demo-"+Date.now()+"-"+i,stock:10}));
-  save(); render(); setStatus("Demo products added. These are sample listings, not verified offers.");
+  try {
+    if (products.length && !confirm("Add demo products to your existing catalog?")) return;
+    const demo = [
+      {name:"Classic Notebook",category:"Books & Stationery",price:99,description:"A handy notebook for school, notes and ideas.",image:"https://images.unsplash.com/photo-1531346878377-a5be20888e57?auto=format&fit=crop&w=900&q=80"},
+      {name:"Everyday Backpack",category:"Fashion",price:699,description:"A practical backpack for daily use.",image:"https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=900&q=80"},
+      {name:"Wireless Headphones",category:"Electronics",price:899,description:"Demo listing for headphones. Check real specifications before selling.",image:"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80"},
+      {name:"Water Bottle",category:"Home",price:249,description:"A reusable bottle for everyday hydration.",image:"https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=900&q=80"},
+      {name:"Canvas Tote Bag",category:"Fashion",price:199,description:"A simple reusable bag for carrying everyday items.",image:"https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=80"}
+    ];
+    const stamp = Date.now();
+    demo.forEach((p,i) => products.push({...p,id:"demo-"+stamp+"-"+i,stock:10}));
+    // Render immediately so storage problems cannot leave the screen at zero.
+    render();
+    renderDashboard();
+    try {
+      save();
+      setStatus("Added 5 demo products. Sample listings only; check details before selling.");
+    } catch (storageError) {
+      setStatus("Added 5 demo products for this page, but the browser could not save them. Export a backup and check browser storage settings.");
+      console.error("MiniCatalog storage error:", storageError);
+    }
+  } catch (error) {
+    setStatus("Could not load demo products: " + (error && error.message ? error.message : "unknown error") + ". Refresh the page and try again.");
+    console.error("MiniCatalog demo button error:", error);
+  }
 });
 $("printBtn").addEventListener("click", () => window.print());
 
