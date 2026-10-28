@@ -384,6 +384,7 @@ let sales = [], ratings = {};
 try { const v=JSON.parse(localStorage.getItem(SALES_KEY)||"[]"); sales=Array.isArray(v)?v.filter(s=>s&&typeof s.name==="string"&&Number.isFinite(s.total)&&Number.isFinite(s.qty)):[]; } catch {}
 try { const v=JSON.parse(localStorage.getItem(RATINGS_KEY)||"{}"); ratings=v&&typeof v==="object"&&!Array.isArray(v)?v:{}; } catch {}
 const DEMO_PRODUCTS = [
+  {name:"Gaming Mouse",category:"Gaming",price:900,description:""},
   {name:"Classic Notebook",category:"Books & Stationery",price:99,description:"A handy notebook for school, notes and ideas.",image:"https://images.unsplash.com/photo-1531346878377-a5be20888e57?auto=format&fit=crop&w=900&q=80"},
   {name:"Everyday Backpack",category:"Fashion",price:699,description:"A practical backpack for daily use.",image:"https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=900&q=80"},
   {name:"Wireless Headphones",category:"Electronics",price:899,description:"Demo listing for headphones. Check real specifications before selling.",image:"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80"},
@@ -399,19 +400,32 @@ function demoSeedFor(product) {
 }
 function normalizeDemoProducts(list) {
   const seenDemoNames = new Set();
-  return list.map(product => {
+  const source = Array.isArray(list) ? list : [];
+  return source.filter(product => {
+    if (!product || typeof product.name !== "string") return false;
+    const copy = product.name.match(/^(.*) \(Copy\)$/i);
+    if (copy) {
+      const baseSeed = DEMO_PRODUCTS.find(seed =>
+        seed.name.toLowerCase() === copy[1].trim().toLowerCase() &&
+        Number(product.price) === seed.price &&
+        String(product.description || "") === seed.description
+      );
+      const baseExists = baseSeed && source.some(candidate =>
+        candidate && candidate.name === baseSeed.name &&
+        Number(candidate.price) === baseSeed.price &&
+        String(candidate.description || "") === baseSeed.description
+      );
+      if (baseExists) return false;
+    }
     const seed = demoSeedFor(product);
-    if (seed) {
-      if (seenDemoNames.has(seed.name)) return null;
-      seenDemoNames.add(seed.name);
-      return {...product, category:seed.category, image:product.image || seed.image};
-    }
-    if (product.name.trim().toLowerCase() === "gaming mouse" &&
-        (product.category || "Other") === "Other") {
-      return {...product, category:"Gaming"};
-    }
-    return product;
-  }).filter(Boolean);
+    if (!seed) return true;
+    if (seenDemoNames.has(seed.name)) return false;
+    seenDemoNames.add(seed.name);
+    return true;
+  }).map(product => {
+    const seed = demoSeedFor(product);
+    return seed ? {...product, category:seed.category, image:product.image || seed.image || ""} : product;
+  });
 }
 
 let products = [];
@@ -553,7 +567,7 @@ function render() {
 
   filtered.forEach(p => {
     const card = element("article", "product");
-    if (p.image) { const img = document.createElement("img"); img.src = p.image; img.alt = p.name; img.loading = "lazy"; img.style.cssText = "width:100%;height:150px;object-fit:cover;border-radius:10px;margin-bottom:10px"; img.onerror = () => { img.style.display = "none"; }; card.appendChild(img); }
+    if (p.image) { const img = document.createElement("img"); img.src = p.image; img.alt = ""; img.setAttribute("aria-hidden", "true"); img.loading = "lazy"; img.style.cssText = "width:100%;height:150px;object-fit:cover;border-radius:10px;margin-bottom:10px"; img.onerror = () => { img.style.display = "none"; }; card.appendChild(img); }
     card.appendChild(element("div", "muted", p.category || "Other"));
     card.appendChild(element("h3", "", p.name));
     card.appendChild(element("div", "price", money(p.price)));
@@ -613,7 +627,7 @@ function render() {
   preview.replaceChildren();
   products.forEach(p => {
     const card = element("article", "preview-card");
-    if (p.image) { const img = document.createElement("img"); img.src = p.image; img.alt = p.name; img.loading = "lazy"; img.style.cssText = "width:100%;height:100px;object-fit:cover;border-radius:8px;margin-bottom:8px"; img.onerror = () => { img.style.display = "none"; }; card.appendChild(img); }
+    if (p.image) { const img = document.createElement("img"); img.src = p.image; img.alt = ""; img.setAttribute("aria-hidden", "true"); img.loading = "lazy"; img.style.cssText = "width:100%;height:100px;object-fit:cover;border-radius:8px;margin-bottom:8px"; img.onerror = () => { img.style.display = "none"; }; card.appendChild(img); }
     card.appendChild(element("strong", "", p.name));
     card.appendChild(element("p", "muted", p.category || "Other"));
     card.appendChild(element("p", "", money(p.price)));
