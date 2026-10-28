@@ -342,24 +342,39 @@ try {
   ).map(p => ({...p, stock:Number.isInteger(p.stock)&&p.stock>=0?p.stock:10})) : [];
 } catch { products = []; }
 
-shopName = localStorage.getItem(SHOP_KEY) || "";
-shopDescription = localStorage.getItem(DESCRIPTION_KEY) || "";
-whatsapp = localStorage.getItem(WHATSAPP_KEY) || "";
+try {
+  shopName = localStorage.getItem(SHOP_KEY) || "";
+  shopDescription = localStorage.getItem(DESCRIPTION_KEY) || "";
+  whatsapp = localStorage.getItem(WHATSAPP_KEY) || "";
+} catch { shopName = ""; shopDescription = ""; whatsapp = ""; }
 try { const savedCart = JSON.parse(localStorage.getItem(CART_KEY) || "{}"); cart = savedCart && typeof savedCart === "object" && !Array.isArray(savedCart) ? savedCart : {}; } catch { cart = {}; }
-for (const id of Object.keys(cart)) { const qty = Number(cart[id]); if (!Number.isInteger(qty) || qty < 1 || !products.some(p => p.id === id)) delete cart[id]; }
+for (const id of Object.keys(cart)) {
+  const qty = Number(cart[id]);
+  const product = products.find(p => p.id === id);
+  if (!Number.isInteger(qty) || qty < 1 || !product || product.stock < 1) delete cart[id];
+  else cart[id] = Math.min(qty, product.stock);
+}
 
 $("shopName").value = shopName;
 $("shopDescription").value = shopDescription;
 $("whatsapp").value = whatsapp;
 
+let storageWarning = false;
 function save() {
-  localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
-  localStorage.setItem(SHOP_KEY, shopName);
-  localStorage.setItem(DESCRIPTION_KEY, shopDescription);
-  localStorage.setItem(WHATSAPP_KEY, whatsapp);
-  localStorage.setItem(CART_KEY, JSON.stringify(cart));
-  localStorage.setItem(SALES_KEY, JSON.stringify(sales));
-  localStorage.setItem(RATINGS_KEY, JSON.stringify(ratings));
+  try {
+    localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
+    localStorage.setItem(SHOP_KEY, shopName);
+    localStorage.setItem(DESCRIPTION_KEY, shopDescription);
+    localStorage.setItem(WHATSAPP_KEY, whatsapp);
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    localStorage.setItem(SALES_KEY, JSON.stringify(sales));
+    localStorage.setItem(RATINGS_KEY, JSON.stringify(ratings));
+    return true;
+  } catch (error) {
+    storageWarning = true;
+    console.warn("MiniCatalog could not save browser data:", error);
+    return false;
+  }
 }
 function stockLabel(p){const n=Number.isInteger(p.stock)?p.stock:10;return n===0?"Out of stock":n<=3?"Low stock · "+n+" left":n+" in stock";}
 function stockClass(p){const n=Number.isInteger(p.stock)?p.stock:10;return n===0?"stock-out":n<=3?"stock-low":"stock-ok";}
@@ -379,7 +394,9 @@ function money(value) {
 }
 
 function setStatus(message) {
-  $("status").textContent = message;
+  $("status").textContent = storageWarning
+    ? message + " Warning: this browser cannot save changes between visits. Export a data backup before leaving."
+    : message;
 }
 
 function element(tag, className, value) {
