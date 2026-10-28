@@ -455,14 +455,14 @@ function render() {
     duplicate.addEventListener("click",()=>{
       if(products.length>=10000)return setStatus("Catalog limit reached.");
       const copy={...p,id:Date.now().toString()+Math.random().toString(36).slice(2,8),name:(p.name+" (Copy)").slice(0,80)};
-      products.unshift(copy);save();render();renderDashboard();setStatus("Product duplicated. Edit the copy before publishing.");
+      products.unshift(copy);save();render();renderCart();renderDashboard();setStatus("Product duplicated. Edit the copy before publishing.");
     });
     const del = element("button", "danger", "Delete");
     del.addEventListener("click", () => {
       if (!confirm(`Delete "${p.name}"?`)) return;
       products = products.filter(item => item.id !== p.id);
       delete cart[p.id];
-      save(); render(); renderCart(); setStatus("Product deleted.");
+      save(); render(); renderCart(); renderDashboard(); setStatus("Product deleted.");
     });
 
     actions.append(share, addToCart, order, sale, edit, duplicate, del);
@@ -508,7 +508,7 @@ $("productForm").addEventListener("submit", e => {
     id: Date.now().toString() + Math.random().toString(36).slice(2,8),
     name, price, description, image, category, stock
   });
-  save(); render();
+  save(); render(); renderCart(); renderDashboard();
   $("productName").value = "";
   $("productPrice").value = "";
   $("productDescription").value = "";
@@ -723,7 +723,7 @@ $("clearBtn").addEventListener("click", () => {
   $("shopName").value = "";
   $("shopDescription").value = "";
   $("whatsapp").value = "";
-  save(); render(); renderCart(); setStatus("Catalog cleared.");
+  save(); render(); renderCart(); renderDashboard(); setStatus("Catalog cleared.");
 });
 
 /* Generate a standalone customer-facing page.
