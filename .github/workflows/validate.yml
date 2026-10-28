@@ -1,0 +1,54 @@
+name: Validate MiniCatalog changes
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Check HTML IDs and JavaScript syntax
+        run: |
+          python3 - <<'PY'
+          import pathlib, re
+          html = pathlib.Path("index.html").read_text(encoding="utf-8")
+          scripts = re.findall(r"<script\\b[^>]*>(.*?)</script\\s*>", html, flags=re.I | re.S)
+          if len(scripts) != 1:
+              raise SystemExit(f"Expected one intact main script, found {len(scripts)}.")
+          ids = re.findall(r"""\\bid=["']([^"']+)["']""", html)
+          duplicates = sorted({item for item in ids if ids.count(item) > 1})
+          if duplicates:
+              raise SystemExit("Duplicate HTML IDs: " + ", ".join(duplicates))
+          refs = set(re.findall(r"""\\$\\(["']([^"']+)["']\\)""", scripts[0]))
+          missing = sorted(refs - set(ids))
+          if missing:
+              raise SystemExit("JavaScript references missing HTML IDs: " + ", ".join(missing))
+          pathlib.Path("/tmp/minicatalog-inline.js").write_text(scripts[0], encoding="utf-8")
+          print(f"Checked {len(ids)} IDs and extracted the main JavaScript.")
+          PY
+          node --check /tmp/minicatalog-inline.js
+      - name: Verify upgrade features are present
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          html = Path("index.html").read_text(encoding="utf-8")
+          required = [
+              'id="themeSelect"', 'id="densitySelect"', 'id="sortBy"',
+              'minicatalog_theme_v1', 'minicatalog_density_v1',
+              'minicatalog_cart_v1', 'minicatalog_sales_v1',
+              'Checkout on WhatsApp', 'Export storefront HTML'
+          ]
+          missing = [item for item in required if item not in html]
+          if missing:
+              raise SystemExit("Missing expected storefront feature(s): " + ", ".join(missing))
+          print("Theme, layout, sorting, cart, sales and export features found.")
+          PY
