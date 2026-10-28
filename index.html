@@ -63,7 +63,13 @@ button:hover{filter:brightness(1.15)}
 .preview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
 .preview-card{background:white;border:1px solid #e2e8f0;border-radius:10px;padding:12px;overflow-wrap:anywhere}
 .preview-card p{font-size:13px}
-.note{font-size:12px;color:var(--muted)}
+ .note{font-size:12px;color:var(--muted)}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.stat-card{padding:14px;border:1px solid var(--line);border-radius:14px;background:rgba(7,13,27,.48)}
+.stat-card span{display:block;color:var(--muted);font-size:12px}.stat-card strong{display:block;margin-top:7px;font-size:22px;overflow-wrap:anywhere}
+.stock-pill{display:inline-block;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800;margin:8px 0}
+.stock-ok{background:rgba(52,211,153,.12);color:#6ee7b7}.stock-low{background:rgba(251,191,36,.12);color:#fcd34d}.stock-out{background:rgba(248,113,113,.12);color:#fca5a5}
+.rating-line{font-size:13px;color:#fbbf24;margin:7px 0}
 @media(max-width:760px){.layout{grid-template-columns:1fr}header{padding:16px}}
 @media print{
   body{background:white;color:black}
@@ -232,9 +238,8 @@ footer{letter-spacing:.04em}
         </select>
 
         <label for="productDescription">Description</label>
-        <textarea id="productDescription" maxlength="400"
-          placeholder="Describe the product"></textarea>
-
+        <textarea id="productDescription" maxlength="400" placeholder="Describe the product"></textarea>
+        <label for="productStock">Units in stock</label><input id="productStock" type="number" min="0" max="1000000" step="1" value="10" required>
         <label for="productImage">Product image URL (optional)</label>
       <input id="productImage" type="url" placeholder="https://example.com/image.jpg">
       <p class="note">Use a direct image URL beginning with https://. Click Load demo products to try sample images.</p>
@@ -262,6 +267,12 @@ footer{letter-spacing:.04em}
       <select id="categoryFilter" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:#0b1425;color:white;font:inherit">
         <option value="all">All categories</option><option>Gaming</option><option>Electronics</option><option>Fashion</option><option>Home</option><option>Books & Stationery</option><option>Beauty</option><option>Sports</option><option>Accessories</option><option>Other</option>
       </select>
+      <div class="section" id="dashboard">
+        <h2>Store dashboard</h2><p class="note">Inventory and sales you record manually in this browser. WhatsApp enquiries are not automatically confirmed sales.</p>
+        <div class="stats-grid">
+          <div class="stat-card"><span>Products</span><strong id="statProducts">0</strong></div><div class="stat-card"><span>Units in stock</span><strong id="statStock">0</strong></div><div class="stat-card"><span>Stock value</span><strong id="statValue">₹0</strong></div><div class="stat-card"><span>Recorded units sold</span><strong id="statSales">0</strong></div><div class="stat-card"><span>Recorded revenue</span><strong id="statRevenue">₹0</strong></div><div class="stat-card"><span>Low-stock products</span><strong id="statLow">0</strong></div>
+        </div><div class="actions" style="margin-top:12px"><button id="exportSalesBtn">Export sales report</button><button id="clearSalesBtn" class="danger">Reset sales records</button></div>
+      </div>
       <div id="products" class="products"></div>
 
       <div class="section" id="cartSection">
@@ -312,7 +323,11 @@ const SHOP_KEY = "minicatalog_shop_v1";
 const DESCRIPTION_KEY = "minicatalog_description_v2";
 const WHATSAPP_KEY = "minicatalog_whatsapp_v2";
 const CART_KEY = "minicatalog_cart_v1";
-
+const SALES_KEY = "minicatalog_sales_v1";
+const RATINGS_KEY = "minicatalog_ratings_v1";
+let sales = [], ratings = {};
+try { const v=JSON.parse(localStorage.getItem(SALES_KEY)||"[]"); sales=Array.isArray(v)?v.filter(s=>s&&typeof s.name==="string"&&Number.isFinite(s.total)&&Number.isFinite(s.qty)):[]; } catch {}
+try { const v=JSON.parse(localStorage.getItem(RATINGS_KEY)||"{}"); ratings=v&&typeof v==="object"&&!Array.isArray(v)?v:{}; } catch {}
 let products = [];
 let shopName = "";
 let shopDescription = "";
@@ -324,7 +339,7 @@ try {
   products = Array.isArray(saved) ? saved.filter(p =>
     p && typeof p.name === "string" &&
     Number.isFinite(p.price) && typeof p.id === "string"
-  ) : [];
+  ).map(p => ({...p, stock:Number.isInteger(p.stock)&&p.stock>=0?p.stock:10})) : [];
 } catch { products = []; }
 
 shopName = localStorage.getItem(SHOP_KEY) || "";
@@ -343,6 +358,18 @@ function save() {
   localStorage.setItem(DESCRIPTION_KEY, shopDescription);
   localStorage.setItem(WHATSAPP_KEY, whatsapp);
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  localStorage.setItem(SALES_KEY, JSON.stringify(sales));
+  localStorage.setItem(RATINGS_KEY, JSON.stringify(ratings));
+}
+function stockLabel(p){const n=Number.isInteger(p.stock)?p.stock:10;return n===0?"Out of stock":n<=3?"Low stock · "+n+" left":n+" in stock";}
+function stockClass(p){const n=Number.isInteger(p.stock)?p.stock:10;return n===0?"stock-out":n<=3?"stock-low":"stock-ok";}
+function productRating(p){const a=Array.isArray(ratings[p.id])?ratings[p.id].filter(n=>Number.isInteger(n)&&n>=1&&n<=5):[];return {avg:a.length?a.reduce((x,y)=>x+y,0)/a.length:0,count:a.length};}
+function renderDashboard(){
+ const units=products.reduce((n,p)=>n+(Number.isInteger(p.stock)?p.stock:10),0);
+ const value=products.reduce((n,p)=>n+p.price*(Number.isInteger(p.stock)?p.stock:10),0);
+ $("statProducts").textContent=products.length;$("statStock").textContent=units;$("statValue").textContent=money(value);
+ $("statSales").textContent=sales.reduce((n,s)=>n+s.qty,0);$("statRevenue").textContent=money(sales.reduce((n,s)=>n+s.total,0));
+ $("statLow").textContent=products.filter(p=>(Number.isInteger(p.stock)?p.stock:10)<=3).length;
 }
 
 function money(value) {
@@ -392,17 +419,23 @@ function render() {
     card.appendChild(element("h3", "", p.name));
     card.appendChild(element("div", "price", money(p.price)));
     card.appendChild(element("p", "", p.description || "No description"));
-
+    card.appendChild(element("span", "stock-pill "+stockClass(p), stockLabel(p)));
+    const rating=productRating(p);
+    card.appendChild(element("div","rating-line",rating.count?"★ "+rating.avg.toFixed(1)+" · "+rating.count+" local rating(s)":"☆ Not rated yet"));
     const actions = element("div", "actions");
     const share = element("button", "", "Share");
     share.addEventListener("click", () => shareProduct(p));
 
-    const addToCart = element("button", "green", "Add to cart");
-    addToCart.addEventListener("click", () => { cart[p.id] = (cart[p.id] || 0) + 1; save(); renderCart(); setStatus(p.name + " added to cart."); });
+    const addToCart = element("button", "green", p.stock===0?"Out of stock":"Add to cart");
+    addToCart.disabled=p.stock===0||(cart[p.id]||0)>=p.stock;
+    addToCart.addEventListener("click", () => { if((cart[p.id]||0)>=p.stock)return setStatus("Only "+p.stock+" units are in stock.");cart[p.id]=(cart[p.id]||0)+1;save();render();renderCart();setStatus(p.name+" added to cart."); });
     const order = element("button", "green", "Order");
     order.title = "Open WhatsApp with a product enquiry";
     order.addEventListener("click", () => orderProduct(p));
 
+    const sale=element("button","","Record sale");
+    sale.title="Record a completed sale manually and reduce stock";
+    sale.addEventListener("click",()=>{if(p.stock<=0)return setStatus("This product is out of stock.");const raw=prompt("Units sold for "+p.name+"? In stock: "+p.stock,"1");if(raw===null)return;const qty=Number(raw);if(!Number.isInteger(qty)||qty<1||qty>p.stock)return setStatus("Enter a whole number from 1 to "+p.stock+".");p.stock-=qty;sales.unshift({name:p.name,productId:p.id,qty,total:p.price*qty,date:new Date().toISOString()});if((cart[p.id]||0)>p.stock){if(!p.stock)delete cart[p.id];else cart[p.id]=p.stock;}save();render();renderCart();renderDashboard();setStatus("Sale recorded; stock updated.");});
     const del = element("button", "danger", "Delete");
     del.addEventListener("click", () => {
       if (!confirm(`Delete "${p.name}"?`)) return;
@@ -411,7 +444,7 @@ function render() {
       save(); render(); renderCart(); setStatus("Product deleted.");
     });
 
-    actions.append(share, addToCart, order, del);
+    actions.append(share, addToCart, order, sale, del);
     card.appendChild(actions);
     list.appendChild(card);
   });
@@ -448,14 +481,17 @@ $("productForm").addEventListener("submit", e => {
     return;
   }
 
+  const stock=Number($("productStock").value);
+  if(!Number.isInteger(stock)||stock<0||stock>1000000){setStatus("Stock must be a whole number from 0 to 1,000,000.");return;}
   products.unshift({
     id: Date.now().toString() + Math.random().toString(36).slice(2,8),
-    name, price, description, image, category
+    name, price, description, image, category, stock
   });
   save(); render();
   $("productName").value = "";
   $("productPrice").value = "";
   $("productDescription").value = "";
+  $("productStock").value = "10";
   $("productCategory").value = "Gaming";
   $("productImage").value = "";
   $("productName").focus();
@@ -483,7 +519,7 @@ $("demoBtn").addEventListener("click", () => {
     {name:"Water Bottle",category:"Home",price:249,description:"A reusable bottle for everyday hydration.",image:"https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=900&q=80"},
     {name:"Canvas Tote Bag",category:"Fashion",price:199,description:"A simple reusable bag for carrying everyday items.",image:"https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=80"}
   ];
-  demo.forEach((p,i) => products.push({...p,id:"demo-"+Date.now()+"-"+i}));
+  demo.forEach((p,i) => products.push({...p,id:"demo-"+Date.now()+"-"+i,stock:10}));
   save(); render(); setStatus("Demo products added. These are sample listings, not verified offers.");
 });
 $("printBtn").addEventListener("click", () => window.print());
@@ -507,7 +543,8 @@ function renderCart() {
     const quantity = element("strong", "", "Qty: " + qty);
     const plus = element("button", "", "+");
     plus.setAttribute("aria-label", "Increase quantity of " + p.name);
-    plus.addEventListener("click", () => { cart[id] = Math.min(99, (cart[id] || 0) + 1); save(); renderCart(); });
+    plus.disabled=qty>=p.stock;
+    plus.addEventListener("click", () => { if((cart[id]||0)>=p.stock)return setStatus("Only "+p.stock+" units are in stock.");cart[id]=Math.min(p.stock,(cart[id]||0)+1);save();render();renderCart(); });
     const remove = element("button", "danger", "Remove");
     remove.addEventListener("click", () => { delete cart[id]; save(); renderCart(); });
     controls.append(minus, quantity, plus, remove); card.appendChild(controls); box.appendChild(card);
@@ -541,6 +578,11 @@ $("checkoutBtn").addEventListener("click", () => {
   window.open(url, "_blank", "noopener,noreferrer");
 });
 
+$("exportSalesBtn").addEventListener("click",()=>{
+ downloadFile("minicatalog-sales-report.csv","date,product,quantity,total\n"+sales.map(s=>[JSON.stringify(s.date),JSON.stringify(s.name),s.qty,s.total].join(",")).join("\n"),"text/csv;charset=utf-8");
+ setStatus("Sales report exported. It includes only manually recorded sales in this browser.");
+});
+$("clearSalesBtn").addEventListener("click",()=>{if(!sales.length)return setStatus("No sales records to reset.");if(!confirm("Reset sales history? Product stock will not be restored."))return;sales=[];save();renderDashboard();setStatus("Sales records reset.");});
 function catalogText() {
   return [shopName || "My Shop", shopDescription, "",
     ...products.flatMap((p,i) => [
@@ -660,6 +702,8 @@ function makeStorefront() {
   const safeProducts = products.map(p => {
     const name = escapeHTML(p.name);
     const category = escapeHTML(p.category || "Other");
+    const stock=Number.isInteger(p.stock)&&p.stock>=0?p.stock:10;
+    const stockText=stock===0?"Out of stock":stock<=3?"Low stock · "+stock+" left":stock+" in stock";
     const description = escapeHTML(p.description || "");
     const price = escapeHTML(money(p.price));
     const image = typeof p.image === "string" && /^https:\/\//i.test(p.image) ? '<img class="product-image" src="' + escapeHTML(p.image) + '" alt="' + name + '" loading="lazy">' : "";
@@ -667,9 +711,9 @@ function makeStorefront() {
       `Hello ${shopName || "shop"}, I am interested in ${p.name} (${money(p.price)}).`
     );
     const link = whatsapp
-      ? `<a class="order" href="https://wa.me/${whatsapp}?text=${message}" target="_blank" rel="noopener noreferrer">Ask about this item</a>`
-      : `<a class="order" href="https://wa.me/?text=${message}" target="_blank" rel="noopener noreferrer">Ask about this item</a>`;
-    return `<article class="product">${image}<div class="category">${category}</div><h2>${name}</h2><div class="price">${price}</div><p>${description}</p>${link}</article>`;
+      ? `<a class="order" href="https://wa.me/${whatsapp}?text=${message}" target="_blank" rel="noopener noreferrer">${stock===0?"Currently unavailable":"Ask about this item"}</a>`
+      : `<a class="order" href="https://wa.me/?text=${message}" target="_blank" rel="noopener noreferrer">${stock===0?"Currently unavailable":"Ask about this item"}</a>`;
+    return `<article class="product">${image}<div class="category">${category}</div><h2>${name}</h2><div class="price">${price}</div><div class="category">${escapeHTML(stockText)}</div><p>${description}</p><div class="rating-line">Rate this product: ${[1,2,3,4,5].map(n=>`<button type="button" data-product="${escapeHTML(p.id)}" data-rating="${n}" aria-label="Rate ${n} out of 5">${"★".repeat(n)}</button>`).join(" ")}<span class="rating-result" data-result="${escapeHTML(p.id)}"></span></div>${link}</article>`;
   }).join("\n");
 
   return `<!DOCTYPE html>
@@ -686,7 +730,7 @@ main{max-width:1000px;margin:auto;padding:25px 16px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
  .category{font-size:12px;color:#64748b;font-weight:700;margin-bottom:8px}.product{background:white;border:1px solid #dbe3ee;border-radius:16px;padding:20px;
 overflow-wrap:anywhere}.product h2{font-size:19px;margin:0 0 12px}.product-image{display:block;width:100%;height:180px;object-fit:cover;border-radius:10px;margin-bottom:14px;background:#e2e8f0}
-.price{font-weight:800;font-size:22px;color:#047857}.product p{color:#475569;line-height:1.6;
+ .price{font-weight:800;font-size:22px;color:#047857}.rating-line{font-size:13px;color:#b45309;margin:9px 0}.rating-line button{padding:3px 5px;margin:2px;background:#fff7ed;color:#92400e;border:1px solid #fed7aa;font-size:11px}.rating-result{display:block;color:#64748b;margin-top:4px}.product p{color:#475569;line-height:1.6;
 white-space:pre-wrap}.order{display:inline-block;margin-top:8px;background:#047857;
 color:white;text-decoration:none;padding:10px 13px;border-radius:9px}
 .empty{color:#64748b;text-align:center;padding:35px}
@@ -695,6 +739,16 @@ footer{text-align:center;color:#64748b;padding:25px;font-size:12px}
 <header class="hero"><h1>${safeName}</h1><p>${safeDescription}</p></header>
 <main><div class="grid">${safeProducts || '<div class="empty">Products coming soon.</div>'}</div></main>
 <footer>Contact the seller for availability, delivery and payment details.</footer>
+<script>
+const ratingKey="minicatalog_customer_ratings_v1";let customerRatings={};
+try{customerRatings=JSON.parse(localStorage.getItem(ratingKey)||"{}")||{};}catch{}
+document.querySelectorAll("[data-product][data-rating]").forEach(button=>button.addEventListener("click",()=>{
+ const id=button.getAttribute("data-product"),value=Number(button.getAttribute("data-rating"));if(!id||value<1||value>5)return;
+ customerRatings[id]=value;localStorage.setItem(ratingKey,JSON.stringify(customerRatings));
+ const result=[...document.querySelectorAll("[data-result]")].find(el=>el.getAttribute("data-result")===id);if(result)result.textContent="Your rating: "+value+"/5 (saved on this device)";
+}));
+document.querySelectorAll("[data-result]").forEach(el=>{const v=customerRatings[el.getAttribute("data-result")];if(v)el.textContent="Your rating: "+v+"/5 (saved on this device)";});
+</script>
 </body></html>`;
 }
 
@@ -707,6 +761,7 @@ $("exportStoreBtn").addEventListener("click", () => {
 
 render();
 renderCart();
+renderDashboard();
 </script>
 </body>
 </html>
