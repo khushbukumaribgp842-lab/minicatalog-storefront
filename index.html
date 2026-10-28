@@ -436,6 +436,27 @@ function render() {
     const sale=element("button","","Record sale");
     sale.title="Record a completed sale manually and reduce stock";
     sale.addEventListener("click",()=>{if(p.stock<=0)return setStatus("This product is out of stock.");const raw=prompt("Units sold for "+p.name+"? In stock: "+p.stock,"1");if(raw===null)return;const qty=Number(raw);if(!Number.isInteger(qty)||qty<1||qty>p.stock)return setStatus("Enter a whole number from 1 to "+p.stock+".");p.stock-=qty;sales.unshift({name:p.name,productId:p.id,qty,total:p.price*qty,date:new Date().toISOString()});if((cart[p.id]||0)>p.stock){if(!p.stock)delete cart[p.id];else cart[p.id]=p.stock;}save();render();renderCart();renderDashboard();setStatus("Sale recorded; stock updated.");});
+    const edit=element("button","","Edit");
+    edit.addEventListener("click",()=>{
+      const name=prompt("Product name:",p.name);if(name===null)return;
+      const priceRaw=prompt("Price in ₹:",String(p.price));if(priceRaw===null)return;
+      const price=Number(priceRaw);
+      const description=prompt("Description:",p.description||"");if(description===null)return;
+      const category=prompt("Category (Gaming, Electronics, Fashion, Home, Books & Stationery, Beauty, Sports, Accessories, Other):",p.category||"Other");if(category===null)return;
+      const stockRaw=prompt("Units in stock:",String(p.stock));if(stockRaw===null)return;
+      const stock=Number(stockRaw);
+      const image=prompt("Image URL (https://) or leave blank:",p.image||"");if(image===null)return;
+      if(!name.trim()||!Number.isFinite(price)||price<0||price>10000000||!Number.isInteger(stock)||stock<0||stock>1000000||(image.trim()&&!/^https:\/\//i.test(image.trim())))return setStatus("Invalid edit. Check name, price, stock and image URL.");
+      p.name=name.trim().slice(0,80);p.price=price;p.description=description.trim().slice(0,400);p.category=category.trim().slice(0,60)||"Other";p.stock=stock;p.image=image.trim();
+      if((cart[p.id]||0)>stock){if(!stock)delete cart[p.id];else cart[p.id]=stock;}
+      save();render();renderCart();renderDashboard();setStatus("Product updated.");
+    });
+    const duplicate=element("button","","Duplicate");
+    duplicate.addEventListener("click",()=>{
+      if(products.length>=10000)return setStatus("Catalog limit reached.");
+      const copy={...p,id:Date.now().toString()+Math.random().toString(36).slice(2,8),name:(p.name+" (Copy)").slice(0,80)};
+      products.unshift(copy);save();render();renderDashboard();setStatus("Product duplicated. Edit the copy before publishing.");
+    });
     const del = element("button", "danger", "Delete");
     del.addEventListener("click", () => {
       if (!confirm(`Delete "${p.name}"?`)) return;
@@ -444,7 +465,7 @@ function render() {
       save(); render(); renderCart(); setStatus("Product deleted.");
     });
 
-    actions.append(share, addToCart, order, sale, del);
+    actions.append(share, addToCart, order, sale, edit, duplicate, del);
     card.appendChild(actions);
     list.appendChild(card);
   });
@@ -641,7 +662,7 @@ function downloadFile(name, content, type) {
 
 $("exportBtn").addEventListener("click", () => {
   downloadFile("minicatalog-backup.json", JSON.stringify({
-    app:"MiniCatalog", version:2, shopName, shopDescription, whatsapp, products
+    app:"MiniCatalog", version:3, shopName, shopDescription, whatsapp, products, sales, ratings
   }, null, 2), "application/json");
   setStatus("Data backup exported.");
 });
@@ -666,15 +687,17 @@ $("backupFile").addEventListener("change", async e => {
     if (!valid) throw new Error("The backup contains invalid products.");
     if (!confirm("Replace the current catalog with this backup?")) return;
 
-    products = data.products;
-    cart = Object.fromEntries(Object.entries(cart).filter(([id]) => products.some(p => p.id === id)));
+    products = data.products.map(p => ({...p,stock:Number.isInteger(p.stock)&&p.stock>=0?p.stock:10}));
+    if(Array.isArray(data.sales))sales=data.sales.filter(s=>s&&typeof s.name==="string"&&Number.isFinite(s.total)&&Number.isFinite(s.qty));
+    if(data.ratings&&typeof data.ratings==="object"&&!Array.isArray(data.ratings))ratings=data.ratings;
+    cart = Object.fromEntries(Object.entries(cart).filter(([id]) => products.some(p => p.id === id && (cart[id]||0)<=p.stock)));
     shopName = String(data.shopName || "").slice(0,60);
     shopDescription = String(data.shopDescription || "").slice(0,400);
     whatsapp = String(data.whatsapp || "").replace(/\D/g,"").slice(0,15);
     $("shopName").value = shopName;
     $("shopDescription").value = shopDescription;
     $("whatsapp").value = whatsapp;
-    save(); render(); renderCart(); setStatus("Backup imported.");
+    save(); render(); renderCart(); renderDashboard(); setStatus("Backup imported.");
   } catch(err) { setStatus(err.message || "Import failed."); }
   finally { e.target.value = ""; }
 });
@@ -713,7 +736,7 @@ function makeStorefront() {
     const link = whatsapp
       ? `<a class="order" href="https://wa.me/${whatsapp}?text=${message}" target="_blank" rel="noopener noreferrer">${stock===0?"Currently unavailable":"Ask about this item"}</a>`
       : `<a class="order" href="https://wa.me/?text=${message}" target="_blank" rel="noopener noreferrer">${stock===0?"Currently unavailable":"Ask about this item"}</a>`;
-    return `<article class="product">${image}<div class="category">${category}</div><h2>${name}</h2><div class="price">${price}</div><div class="category">${escapeHTML(stockText)}</div><p>${description}</p><div class="rating-line">Rate this product: ${[1,2,3,4,5].map(n=>`<button type="button" data-product="${escapeHTML(p.id)}" data-rating="${n}" aria-label="Rate ${n} out of 5">${"★".repeat(n)}</button>`).join(" ")}<span class="rating-result" data-result="${escapeHTML(p.id)}"></span></div>${link}</article>`;
+    return `<article class="product" data-category="${category}" data-price="${p.price}" data-name="${name.toLowerCase()}">${image}<div class="category">${category}</div><h2>${name}</h2><div class="price">${price}</div><div class="category">${escapeHTML(stockText)}</div><p>${description}</p><div class="rating-line">Rate this product: ${[1,2,3,4,5].map(n=>`<button type="button" data-product="${escapeHTML(p.id)}" data-rating="${n}" aria-label="Rate ${n} out of 5">${"★".repeat(n)}</button>`).join(" ")}<span class="rating-result" data-result="${escapeHTML(p.id)}"></span></div>${link}</article>`;
   }).join("\n");
 
   return `<!DOCTYPE html>
@@ -727,6 +750,7 @@ font:16px system-ui,Arial,sans-serif}.hero{padding:42px 18px;background:#101827;
 color:white;text-align:center}.hero h1{font-size:clamp(30px,6vw,48px);margin:0 0 10px}
 .hero p{max-width:650px;margin:auto;color:#cbd5e1;line-height:1.6}
 main{max-width:1000px;margin:auto;padding:25px 16px}
+.tools{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:18px}.tools input,.tools select{flex:1;min-width:150px;padding:10px;border:1px solid #cbd5e1;border-radius:9px;background:white;color:#172033;font:inherit}.tools button{padding:10px;border:1px solid #cbd5e1;border-radius:9px;background:white;color:#172033}.tools span{align-self:center;color:#64748b;font-size:13px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
  .category{font-size:12px;color:#64748b;font-weight:700;margin-bottom:8px}.product{background:white;border:1px solid #dbe3ee;border-radius:16px;padding:20px;
 overflow-wrap:anywhere}.product h2{font-size:19px;margin:0 0 12px}.product-image{display:block;width:100%;height:180px;object-fit:cover;border-radius:10px;margin-bottom:14px;background:#e2e8f0}
@@ -737,7 +761,7 @@ color:white;text-decoration:none;padding:10px 13px;border-radius:9px}
 footer{text-align:center;color:#64748b;padding:25px;font-size:12px}
 </style></head><body>
 <header class="hero"><h1>${safeName}</h1><p>${safeDescription}</p></header>
-<main><div class="grid">${safeProducts || '<div class="empty">Products coming soon.</div>'}</div></main>
+<main><section class="tools"><input id="shopSearch" type="search" placeholder="Search products..." aria-label="Search products"><select id="shopCategory" aria-label="Filter by category"><option value="">All categories</option>${[...new Set(products.map(p=>p.category||"Other"))].map(cat=>`<option value="${escapeHTML(cat)}">${escapeHTML(cat)}</option>`).join("")}</select><select id="shopSort" aria-label="Sort products"><option value="featured">Featured</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option><option value="name">Name: A to Z</option></select><button type="button" id="showSaved">Saved items ♥</button><span id="resultCount"></span></section><div class="grid" id="shopGrid">${safeProducts || '<div class="empty">Products coming soon.</div>'}</div></main>
 <footer>Contact the seller for availability, delivery and payment details.</footer>
 <script>
 const ratingKey="minicatalog_customer_ratings_v1";let customerRatings={};
@@ -748,6 +772,28 @@ document.querySelectorAll("[data-product][data-rating]").forEach(button=>button.
  const result=[...document.querySelectorAll("[data-result]")].find(el=>el.getAttribute("data-result")===id);if(result)result.textContent="Your rating: "+value+"/5 (saved on this device)";
 }));
 document.querySelectorAll("[data-result]").forEach(el=>{const v=customerRatings[el.getAttribute("data-result")];if(v)el.textContent="Your rating: "+v+"/5 (saved on this device)";});
+const savedKey="minicatalog_saved_items_v1";let savedItems=[];
+try{savedItems=JSON.parse(localStorage.getItem(savedKey)||"[]");if(!Array.isArray(savedItems))savedItems=[];}catch{savedItems=[];}
+document.querySelectorAll(".product").forEach(card=>{
+ const title=card.querySelector("h2");if(!title)return;
+ const saveBtn=document.createElement("button");saveBtn.type="button";saveBtn.className="save-item";
+ const id=card.querySelector("[data-product]")?.getAttribute("data-product")||title.textContent;
+ const update=()=>{saveBtn.textContent=savedItems.includes(id)?"♥ Saved":"♡ Save item";};
+ update();saveBtn.addEventListener("click",()=>{savedItems=savedItems.includes(id)?savedItems.filter(x=>x!==id):[...savedItems,id];localStorage.setItem(savedKey,JSON.stringify(savedItems));update();});
+ const order=card.querySelector(".order");if(order)order.insertAdjacentElement("beforebegin",saveBtn);
+});
+const grid=document.getElementById("shopGrid");
+function filterStore(){
+ const q=document.getElementById("shopSearch").value.trim().toLowerCase(),cat=document.getElementById("shopCategory").value,sort=document.getElementById("shopSort").value,onlySaved=document.getElementById("showSaved").dataset.active==="1";
+ const cards=[...grid.querySelectorAll(".product")];
+ cards.forEach(card=>{const id=card.querySelector("[data-product]")?.getAttribute("data-product")||card.querySelector("h2")?.textContent;const match=card.dataset.name.includes(q)&&(!cat||card.dataset.category===cat)&&(!onlySaved||savedItems.includes(id));card.hidden=!match;});
+ const visible=cards.filter(card=>!card.hidden);
+ visible.sort((a,b)=>sort==="low"?Number(a.dataset.price)-Number(b.dataset.price):sort==="high"?Number(b.dataset.price)-Number(a.dataset.price):sort==="name"?a.dataset.name.localeCompare(b.dataset.name):0).forEach(card=>grid.appendChild(card));
+ document.getElementById("resultCount").textContent=visible.length+" item(s)";
+}
+["shopSearch","shopCategory","shopSort"].forEach(id=>document.getElementById(id).addEventListener(id==="shopSearch"?"input":"change",filterStore));
+document.getElementById("showSaved").addEventListener("click",e=>{e.currentTarget.dataset.active=e.currentTarget.dataset.active==="1"?"0":"1";filterStore();});
+filterStore();
 </script>
 </body></html>`;
 }
