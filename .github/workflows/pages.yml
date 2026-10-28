@@ -23,6 +23,26 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Check HTML IDs and JavaScript syntax
+        run: |
+          python3 - <<'PY'
+          import pathlib, re
+          html = pathlib.Path("index.html").read_text(encoding="utf-8")
+          scripts = re.findall(r"<script\\b[^>]*>(.*?)</script\\s*>", html, flags=re.I | re.S)
+          if len(scripts) != 1:
+              raise SystemExit(f"Expected one intact main script, found {len(scripts)}. Check for an unescaped </script> inside a template.")
+          ids = re.findall(r"""\\bid=["']([^"']+)["']""", html)
+          duplicates = sorted({item for item in ids if ids.count(item) > 1})
+          if duplicates:
+              raise SystemExit("Duplicate HTML IDs: " + ", ".join(duplicates))
+          refs = set(re.findall(r"""\\$\\(["']([^"']+)["']\\)""", scripts[0]))
+          missing = sorted(refs - set(ids))
+          if missing:
+              raise SystemExit("JavaScript references missing HTML IDs: " + ", ".join(missing))
+          pathlib.Path("/tmp/minicatalog-inline.js").write_text(scripts[0], encoding="utf-8")
+          print(f"Checked {len(ids)} IDs and extracted the main JavaScript.")
+          PY
+          node --check /tmp/minicatalog-inline.js
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload website files
