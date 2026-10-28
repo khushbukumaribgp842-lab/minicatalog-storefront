@@ -45,10 +45,32 @@ jobs:
               'id="themeSelect"', 'id="densitySelect"', 'id="sortBy"',
               'minicatalog_theme_v1', 'minicatalog_density_v1',
               'minicatalog_cart_v1', 'minicatalog_sales_v1',
-              'Checkout on WhatsApp', 'Export storefront HTML'
+              'Checkout on WhatsApp', 'Export storefront HTML',
+              'const DEMO_PRODUCTS =', 'normalizeDemoProducts(products)',
+              'Demo products are already in your catalog. No duplicates were added.'
           ]
           missing = [item for item in required if item not in html]
           if missing:
               raise SystemExit("Missing expected storefront feature(s): " + ", ".join(missing))
           print("Theme, layout, sorting, cart, sales and export features found.")
+          PY
+
+      - name: Verify demo deduplication and preview rendering
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          html = Path("index.html").read_text(encoding="utf-8")
+          if html.count("const DEMO_PRODUCTS =") != 1:
+              raise SystemExit("Expected one shared demo product list.")
+          if "const demo = [" in html:
+              raise SystemExit("Old repeated demo seed list still exists.")
+          if html.count('card.appendChild(element("strong", "", p.name))') != 1:
+              raise SystemExit("Preview should append each product name once per card.")
+          if "seenDemoNames.has(seed.name)" not in html:
+              raise SystemExit("Startup duplicate cleanup is missing.")
+          if "existingDemoNames" not in html or "missingDemo" not in html:
+              raise SystemExit("Demo button does not skip products already in the catalog.")
+          if 'category:seed.category' not in html:
+              raise SystemExit("Known demo product categories are not restored.")
+          print("Demo deduplication, category migration and preview rendering checks passed.")
           PY
