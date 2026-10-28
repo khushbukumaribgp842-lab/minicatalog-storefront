@@ -383,6 +383,37 @@ try {
 let sales = [], ratings = {};
 try { const v=JSON.parse(localStorage.getItem(SALES_KEY)||"[]"); sales=Array.isArray(v)?v.filter(s=>s&&typeof s.name==="string"&&Number.isFinite(s.total)&&Number.isFinite(s.qty)):[]; } catch {}
 try { const v=JSON.parse(localStorage.getItem(RATINGS_KEY)||"{}"); ratings=v&&typeof v==="object"&&!Array.isArray(v)?v:{}; } catch {}
+const DEMO_PRODUCTS = [
+  {name:"Classic Notebook",category:"Books & Stationery",price:99,description:"A handy notebook for school, notes and ideas.",image:"https://images.unsplash.com/photo-1531346878377-a5be20888e57?auto=format&fit=crop&w=900&q=80"},
+  {name:"Everyday Backpack",category:"Fashion",price:699,description:"A practical backpack for daily use.",image:"https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=900&q=80"},
+  {name:"Wireless Headphones",category:"Electronics",price:899,description:"Demo listing for headphones. Check real specifications before selling.",image:"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80"},
+  {name:"Water Bottle",category:"Home",price:249,description:"A reusable bottle for everyday hydration.",image:"https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=900&q=80"},
+  {name:"Canvas Tote Bag",category:"Fashion",price:199,description:"A simple reusable bag for carrying everyday items.",image:"https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=80"}
+];
+function demoSeedFor(product) {
+  return DEMO_PRODUCTS.find(seed =>
+    product && product.name === seed.name &&
+    Number(product.price) === seed.price &&
+    String(product.description || "") === seed.description
+  ) || null;
+}
+function normalizeDemoProducts(list) {
+  const seenDemoNames = new Set();
+  return list.map(product => {
+    const seed = demoSeedFor(product);
+    if (seed) {
+      if (seenDemoNames.has(seed.name)) return null;
+      seenDemoNames.add(seed.name);
+      return {...product, category:seed.category, image:product.image || seed.image};
+    }
+    if (product.name.trim().toLowerCase() === "gaming mouse" &&
+        (product.category || "Other") === "Other") {
+      return {...product, category:"Gaming"};
+    }
+    return product;
+  }).filter(Boolean);
+}
+
 let products = [];
 let shopName = "";
 let shopDescription = "";
@@ -396,6 +427,9 @@ try {
     Number.isFinite(p.price) && typeof p.id === "string"
   ).map(p => ({...p, stock:Number.isInteger(p.stock)&&p.stock>=0?p.stock:10})) : [];
 } catch { products = []; }
+const originalProductsSnapshot = JSON.stringify(products);
+products = normalizeDemoProducts(products);
+const catalogMigrationChanged = JSON.stringify(products) !== originalProductsSnapshot;
 
 try {
   shopName = localStorage.getItem(SHOP_KEY) || "";
@@ -456,6 +490,8 @@ function save() {
     return false;
   }
 }
+// Persist the one-time cleanup of repeated built-in demo listings and categories.
+if (catalogMigrationChanged) save();
 function stockLabel(p){const n=Number.isInteger(p.stock)?p.stock:10;return n===0?"Out of stock":n<=3?"Low stock · "+n+" left":n+" in stock";}
 function stockClass(p){const n=Number.isInteger(p.stock)?p.stock:10;return n===0?"stock-out":n<=3?"stock-low":"stock-ok";}
 function productRating(p){const a=Array.isArray(ratings[p.id])?ratings[p.id].filter(n=>Number.isInteger(n)&&n>=1&&n<=5):[];return {avg:a.length?a.reduce((x,y)=>x+y,0)/a.length:0,count:a.length};}
@@ -637,24 +673,27 @@ $("categoryFilter").addEventListener("change", render);
 $("sortBy").addEventListener("change", render);
 $("demoBtn").addEventListener("click", () => {
   try {
-    if (products.length && !confirm("Add demo products to your existing catalog?")) return;
-    const demo = [
-      {name:"Classic Notebook",category:"Books & Stationery",price:99,description:"A handy notebook for school, notes and ideas.",image:"https://images.unsplash.com/photo-1531346878377-a5be20888e57?auto=format&fit=crop&w=900&q=80"},
-      {name:"Everyday Backpack",category:"Fashion",price:699,description:"A practical backpack for daily use.",image:"https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=900&q=80"},
-      {name:"Wireless Headphones",category:"Electronics",price:899,description:"Demo listing for headphones. Check real specifications before selling.",image:"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80"},
-      {name:"Water Bottle",category:"Home",price:249,description:"A reusable bottle for everyday hydration.",image:"https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=900&q=80"},
-      {name:"Canvas Tote Bag",category:"Fashion",price:199,description:"A simple reusable bag for carrying everyday items.",image:"https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=80"}
-    ];
+    if (products.length && !confirm("Add any missing demo products to your existing catalog?")) return;
+    const existingDemoNames = new Set(products.map(demoSeedFor).filter(Boolean).map(p => p.name));
+    const missingDemo = DEMO_PRODUCTS.filter(p => !existingDemoNames.has(p.name));
+    if (!missingDemo.length) {
+      setStatus("Demo products are already in your catalog. No duplicates were added.");
+      return;
+    }
     const stamp = Date.now();
-    demo.forEach((p,i) => products.push({...p,id:"demo-"+stamp+"-"+i,stock:10}));
-    // Render immediately so storage problems cannot leave the screen at zero.
+    missingDemo.forEach((p,i) => products.push({
+      ...p,
+      id:"demo-"+p.name.toLowerCase().replace(/[^a-z0-9]+/g,"-")+"-"+stamp+"-"+i,
+      stock:10
+    }));
     render();
+    renderCart();
     renderDashboard();
     try {
       save();
-      setStatus("Added 5 demo products. Sample listings only; check details before selling.");
+      setStatus("Added "+missingDemo.length+" missing demo product(s). Sample listings only; check details before selling.");
     } catch (storageError) {
-      setStatus("Added 5 demo products for this page, but the browser could not save them. Export a backup and check browser storage settings.");
+      setStatus("Added demo products for this page, but the browser could not save them. Export a backup and check browser storage settings.");
       console.error("MiniCatalog storage error:", storageError);
     }
   } catch (error) {
