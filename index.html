@@ -809,7 +809,7 @@ function filterStore(){
 ["shopSearch","shopCategory","shopSort"].forEach(id=>document.getElementById(id).addEventListener(id==="shopSearch"?"input":"change",filterStore));
 document.getElementById("showSaved").addEventListener("click",e=>{e.currentTarget.dataset.active=e.currentTarget.dataset.active==="1"?"0":"1";filterStore();});
 filterStore();
-</script>
+<\/script>
 </body></html>`;
 }
 
