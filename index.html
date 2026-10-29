@@ -511,7 +511,7 @@ function normalizeDemoProducts(list) {
     return true;
   }).map(product => {
     const seed = demoSeedFor(product);
-    return seed ? {...product, category:seed.category, image:product.image || seed.image || ""} : product;
+    return seed ? {...product, category:product.category || seed.category, image:product.image || seed.image || ""} : product;
   });
 }
 
