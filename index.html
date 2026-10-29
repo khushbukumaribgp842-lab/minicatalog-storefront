@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0b1120">\n<link rel="icon" type="image/svg+xml" href="logo.svg">
-<title>MiniCatalog 2.0</title>
+<title>MiniCatalog 3.0 — Your Shop, Elevated</title>
 <style>
 :root {
   --bg:#0b1120; --panel:#121c30; --line:#283750;
@@ -208,6 +208,62 @@ body[data-density="compact"] .product p{min-height:0;margin:7px 0}
 body[data-density="compact"] .product .actions{gap:5px}
 body[data-density="compact"] .product .actions button{padding:8px;font-size:12px}
 @media(max-width:520px){.filter-grid{grid-template-columns:1fr}}
+ .hero-kicker,.eyebrow{font-size:11px;font-weight:850;letter-spacing:.16em;color:#a5b4fc;text-transform:uppercase}
+.hero-kicker{display:flex;align-items:center;gap:9px;margin-bottom:17px}
+.hero-pulse{width:7px;height:7px;border-radius:50%;background:#67e8f9;box-shadow:0 0 0 5px rgba(103,232,249,.12)}
+.hero h1{font-size:clamp(34px,6vw,58px);max-width:850px}
+.hero-gradient{background:linear-gradient(100deg,#a5b4fc,#67e8f9 75%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:23px}
+.hero-actions button{min-height:46px;padding:12px 17px}
+.hero-proof{display:flex;gap:10px 20px;flex-wrap:wrap;margin-top:25px;color:#b7c6e0;font-size:12px;font-weight:650}
+.section-heading,.analytics-title{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.section-heading h2{margin:5px 0 0}
+.live-pill{display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(66,230,178,.22);background:rgba(66,230,178,.07);color:#8af0ce;border-radius:999px;padding:6px 10px;font-size:11px;font-weight:750}
+.live-pill i{width:6px;height:6px;background:#42e6b2;border-radius:50%}
+.analytics-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(230px,.8fr);gap:12px;margin-top:14px}
+.analytics-panel{min-width:0;border:1px solid rgba(137,159,199,.2);border-radius:16px;padding:16px;background:rgba(5,11,24,.28)}
+.analytics-title h3{margin:0;font-size:14px}.analytics-title span{font-size:11px;color:var(--muted)}
+.revenue-chart{height:145px;display:flex;align-items:stretch;gap:8px;padding:15px 0 0}
+.chart-day{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:7px}
+.chart-bar-wrap{width:100%;height:100px;display:flex;align-items:flex-end;justify-content:center}
+.chart-bar{width:min(30px,78%);min-height:3px;border-radius:7px 7px 2px 2px;background:linear-gradient(180deg,#67e8f9,#8b9cff);box-shadow:0 3px 12px rgba(103,232,249,.12)}
+.chart-day label{font-size:10px;color:var(--muted);margin:0;white-space:nowrap}
+.chart-day small{font-size:9px;color:#dbeafe;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.analytics-foot{font-size:11px;margin:8px 0 0}
+.highlight-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(137,159,199,.12);font-size:12px;color:var(--muted)}
+.highlight-row:last-child{border-bottom:0}.highlight-row strong{font-size:12px;color:var(--text);text-align:right;overflow-wrap:anywhere;max-width:60%}
+.product{padding:12px}
+.product img.product-image{width:100%;height:190px;object-fit:cover;border-radius:13px;margin-bottom:13px;border:1px solid rgba(137,159,199,.14)}
+.product .product-topline{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:2px 0 8px}
+.product .category-label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:#b9c7e3}
+.product .featured-pill{font-size:9px;letter-spacing:.06em;text-transform:uppercase;font-weight:850;padding:4px 7px;border-radius:999px;background:rgba(167,139,250,.13);color:#d2c4ff}
+.product h3{font-size:17px;min-height:44px}
+.product .price{font-size:22px}
+.product .product-desc{min-height:42px;line-height:1.55}
+.product .actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.product .actions button{min-width:0;padding:9px 7px;font-size:12px}
+.product .actions button:nth-child(3){grid-column:1/-1}
+.preview-card{min-width:0}
+@media(max-width:760px){
+  .analytics-grid{grid-template-columns:1fr}
+  .hero h1{font-size:clamp(32px,9vw,46px)}
+  .hero-proof{gap:8px 14px}
+  .product img.product-image{height:170px}
+  .product .actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:420px){
+  .hero-actions{display:grid;grid-template-columns:1fr}
+  .hero-actions button{width:100%}
+  .hero-proof{display:grid;grid-template-columns:1fr 1fr}
+  .products{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .product{padding:9px;border-radius:14px}
+  .product img.product-image{height:125px}
+  .product h3{font-size:14px;min-height:38px}
+  .product .price{font-size:18px}
+  .product .product-desc{font-size:12px;min-height:45px}
+  .product .actions button{font-size:11px;padding:8px 5px}
+  .stock-pill{font-size:9px;padding:4px 6px}
+}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
 }
@@ -238,16 +294,18 @@ body[data-density="compact"] .product .actions button{padding:8px;font-size:12px
       <rect x="25" y="30" width="5" height="3" rx=".7" fill="#a78bfa"/>
     </svg>
     <span class="brand-name">Mini<span>Catalog</span></span>
-    <span class="brand-version">2.0</span>
+    <span class="brand-version">3.0</span>
   </a>
   <div class="tag">YOUR SHOP. YOUR CATALOG.</div>
 </header>
 
 <main>
   <section class="hero">
-    <h1>Build your digital shop.</h1>
-    <p>Add products, preview your customer-facing storefront, and export a
-    standalone shop page ready to publish online.</p>
+    <div class="hero-kicker"><span class="hero-pulse"></span> MINI CATALOG 3.0 · THE SELLER STUDIO</div>
+    <h1>Your products.<br><span class="hero-gradient">A storefront that stands out.</span></h1>
+    <p>Create a polished digital shop in minutes. Organize your products, track the sales you record, preview the customer experience, and export a storefront you can publish online.</p>
+    <div class="hero-actions"><button class="primary" type="button" id="heroAddBtn">＋ Add your first product</button><button type="button" id="heroCatalogBtn">Explore catalog ↓</button></div>
+    <div class="hero-proof"><span>✦ Premium product cards</span><span>↗ Sales insights</span><span>▣ Mobile-ready layout</span></div>
   </section>
 
   <div class="layout">
@@ -337,10 +395,15 @@ body[data-density="compact"] .product .actions button{padding:8px;font-size:12px
         </div>
       </div>
       <div class="section" id="dashboard">
-        <h2>Store dashboard</h2><p class="note">Inventory and sales you record manually in this browser. WhatsApp enquiries are not automatically confirmed sales.</p>
+        <div class="section-heading"><div><div class="eyebrow">BUSINESS OVERVIEW</div><h2>Store analytics</h2></div><span class="live-pill"><i></i> Local records</span></div>
+        <p class="note">Insights use sales you record manually in this browser. WhatsApp enquiries are not automatically confirmed sales.</p>
         <div class="stats-grid">
           <div class="stat-card"><span>Products</span><strong id="statProducts">0</strong></div><div class="stat-card"><span>Units in stock</span><strong id="statStock">0</strong></div><div class="stat-card"><span>Stock value</span><strong id="statValue">₹0</strong></div><div class="stat-card"><span>Recorded units sold</span><strong id="statSales">0</strong></div><div class="stat-card"><span>Recorded revenue</span><strong id="statRevenue">₹0</strong></div><div class="stat-card"><span>Low-stock products</span><strong id="statLow">0</strong></div>
-        </div><div class="actions" style="margin-top:12px"><button id="exportSalesBtn">Export sales report</button><button id="clearSalesBtn" class="danger">Reset sales records</button></div>
+        </div><div class="analytics-grid">
+          <article class="analytics-panel"><div class="analytics-title"><h3>Revenue trend</h3><span>Last 7 days</span></div><div id="revenueChart" class="revenue-chart" role="img" aria-label="Recorded revenue over the last seven days"></div><p id="revenueInsight" class="analytics-foot">Record a sale to start building your trend.</p></article>
+          <article class="analytics-panel"><div class="analytics-title"><h3>Sales highlights</h3><span>All records</span></div><div class="highlight-row"><span>Top product</span><strong id="statTopProduct">—</strong></div><div class="highlight-row"><span>Average sale</span><strong id="statAverageSale">₹0</strong></div><div class="highlight-row"><span>Best sales day</span><strong id="statBestDay">—</strong></div><div class="highlight-row"><span>Recorded orders</span><strong id="statOrders">0</strong></div></article>
+        </div>
+        <div class="actions" style="margin-top:12px"><button id="exportSalesBtn">Export sales report</button><button id="clearSalesBtn" class="danger">Reset sales records</button></div>
       </div>
       <div id="products" class="products"></div>
 
@@ -535,15 +598,48 @@ function productRating(p){const a=Array.isArray(ratings[p.id])?ratings[p.id].fil
 function renderDashboard(){
  const units=products.reduce((n,p)=>n+(Number.isInteger(p.stock)?p.stock:10),0);
  const value=products.reduce((n,p)=>n+p.price*(Number.isInteger(p.stock)?p.stock:10),0);
+ const totalRevenue=sales.reduce((n,s)=>n+s.total,0);
  $("statProducts").textContent=products.length;$("statStock").textContent=units;$("statValue").textContent=money(value);
- $("statSales").textContent=sales.reduce((n,s)=>n+s.qty,0);$("statRevenue").textContent=money(sales.reduce((n,s)=>n+s.total,0));
+ $("statSales").textContent=sales.reduce((n,s)=>n+s.qty,0);$("statRevenue").textContent=money(totalRevenue);
  $("statLow").textContent=products.filter(p=>(Number.isInteger(p.stock)?p.stock:10)<=3).length;
+ renderAnalytics();
 }
+function renderAnalytics(){
+ const now=new Date();const days=[];
+ for(let i=6;i>=0;i--){const d=new Date(now);d.setHours(0,0,0,0);d.setDate(d.getDate()-i);days.push({date:d,key:d.toDateString(),total:0,label:d.toLocaleDateString("en-IN",{weekday:"short"})});}
+ sales.forEach(s=>{const d=new Date(s.date);if(!Number.isFinite(d.getTime()))return;const day=days.find(x=>x.key===new Date(d.getFullYear(),d.getMonth(),d.getDate()).toDateString());if(day)day.total+=Number(s.total)||0;});
+ const max=Math.max(1,...days.map(d=>d.total));const chart=$("revenueChart");chart.replaceChildren();
+ days.forEach(day=>{const col=element("div","chart-day");const amount=element("small","",day.total?money(day.total).replace(/\.00$/,""):"₹0");const wrap=element("div","chart-bar-wrap");const bar=element("div","chart-bar");bar.style.height=Math.max(3,day.total/max*100)+"%";bar.title=day.date.toLocaleDateString("en-IN")+": "+money(day.total);wrap.appendChild(bar);col.append(amount,wrap,element("label","",day.label));chart.appendChild(col);});
+ const todayTotal=days[6].total;$("revenueInsight").textContent=totalRevenueForDays(days)>0?"Last 7 days: "+money(totalRevenueForDays(days))+" recorded. Today: "+money(todayTotal)+".":"No sales recorded in the last 7 days yet.";
+ const productTotals={};sales.forEach(s=>{const name=s.name||"Unknown product";productTotals[name]=(productTotals[name]||0)+(Number(s.qty)||0);});
+ const top=Object.entries(productTotals).sort((a,b)=>b[1]-a[1])[0];
+ $("statTopProduct").textContent=top?top[0]+" ("+top[1]+" sold)":"—";
+ $("statAverageSale").textContent=sales.length?money(totalRevenue/sales.length):money(0);
+ const dayTotals={};sales.forEach(s=>{const d=new Date(s.date);if(Number.isFinite(d.getTime())){const key=d.toLocaleDateString("en-IN",{day:"numeric",month:"short"});dayTotals[key]=(dayTotals[key]||0)+(Number(s.total)||0);}});
+ const best=Object.entries(dayTotals).sort((a,b)=>b[1]-a[1])[0];
+ $("statBestDay").textContent=best?best[0]+" · "+money(best[1]):"—";
+ $("statOrders").textContent=sales.length;
+}
+function totalRevenueForDays(days){return days.reduce((sum,d)=>sum+d.total,0);}
 
 function money(value) {
   return new Intl.NumberFormat("en-IN", {
     style:"currency", currency:"INR", maximumFractionDigits:2
   }).format(value);
+}
+function categoryImage(category){
+ const images={
+  "Gaming":"https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=900&q=82",
+  "Electronics":"https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&w=900&q=82",
+  "Fashion":"https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=82",
+  "Home":"https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=900&q=82",
+  "Books & Stationery":"https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=900&q=82",
+  "Beauty":"https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=900&q=82",
+  "Sports":"https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=900&q=82",
+  "Accessories":"https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&w=900&q=82",
+  "Other":"https://images.unsplash.com/photo-1490312278390-ab64016e0aa9?auto=format&fit=crop&w=900&q=82"
+ };
+ return images[category]||images.Other;
 }
 
 function setStatus(message) {
@@ -590,11 +686,12 @@ function render() {
 
   filtered.forEach(p => {
     const card = element("article", "product");
-    if (p.image) { const img = document.createElement("img"); img.src = p.image; img.alt = ""; img.setAttribute("aria-hidden", "true"); img.loading = "lazy"; img.style.cssText = "width:100%;height:150px;object-fit:cover;border-radius:10px;margin-bottom:10px"; img.onerror = () => { img.style.display = "none"; }; card.appendChild(img); }
-    card.appendChild(element("div", "muted", p.category || "Other"));
+    const fallbackImage=categoryImage(p.category);
+    const img=document.createElement("img");img.className="product-image";img.src=p.image||fallbackImage;img.alt = ""; img.setAttribute("aria-hidden", "true"); img.loading = "lazy";img.onerror=()=>{if(img.src!==fallbackImage)img.src=fallbackImage;else img.style.display="none";};card.appendChild(img);
+    const topLine=element("div","product-topline");topLine.appendChild(element("span","category-label",p.category||"Other"));if(products.indexOf(p)<3)topLine.appendChild(element("span","featured-pill","Featured"));card.appendChild(topLine);
     card.appendChild(element("h3", "", p.name));
     card.appendChild(element("div", "price", money(p.price)));
-    card.appendChild(element("p", "", p.description || "No description"));
+    card.appendChild(element("p", "product-desc", p.description || "A quality pick from your catalog."));
     card.appendChild(element("span", "stock-pill "+stockClass(p), stockLabel(p)));
     const rating=productRating(p);
     card.appendChild(element("div","rating-line",rating.count?"★ "+rating.avg.toFixed(1)+" · "+rating.count+" local rating(s)":"☆ Not rated yet"));
@@ -650,7 +747,7 @@ function render() {
   preview.replaceChildren();
   products.forEach(p => {
     const card = element("article", "preview-card");
-    if (p.image) { const img = document.createElement("img"); img.src = p.image; img.alt = ""; img.setAttribute("aria-hidden", "true"); img.loading = "lazy"; img.style.cssText = "width:100%;height:100px;object-fit:cover;border-radius:8px;margin-bottom:8px"; img.onerror = () => { img.style.display = "none"; }; card.appendChild(img); }
+    { const fallbackImage=categoryImage(p.category); const img=document.createElement("img"); img.src=p.image||fallbackImage; img.alt = ""; img.setAttribute("aria-hidden", "true"); img.loading = "lazy"; img.style.cssText="width:100%;height:100px;object-fit:cover;border-radius:8px;margin-bottom:8px"; img.onerror=()=>{if(img.src!==fallbackImage)img.src=fallbackImage;else img.style.display="none";}; card.appendChild(img); }
     card.appendChild(element("strong", "", p.name));
     card.appendChild(element("p", "muted", p.category || "Other"));
     card.appendChild(element("p", "", money(p.price)));
@@ -659,6 +756,8 @@ function render() {
   });
 }
 
+$("heroAddBtn").addEventListener("click",()=>{$("productName").focus();$("productForm").scrollIntoView({behavior:"smooth",block:"center"});});
+$("heroCatalogBtn").addEventListener("click",()=>{$("products").scrollIntoView({behavior:"smooth",block:"start"});});
 $("productForm").addEventListener("submit", e => {
   e.preventDefault();
   shopName = $("shopName").value.trim();
@@ -927,7 +1026,8 @@ function makeStorefront() {
     const stockText=stock===0?"Out of stock":stock<=3?"Low stock · "+stock+" left":stock+" in stock";
     const description = escapeHTML(p.description || "");
     const price = escapeHTML(money(p.price));
-    const image = typeof p.image === "string" && /^https:\/\//i.test(p.image) ? '<img class="product-image" src="' + escapeHTML(p.image) + '" alt="' + name + '" loading="lazy">' : "";
+    const imageUrl = typeof p.image === "string" && /^https:\/\//i.test(p.image) ? p.image : categoryImage(p.category);
+    const image = '<img class="product-image" src="' + escapeHTML(imageUrl) + '" alt="' + name + '" loading="lazy">';
     const message = encodeURIComponent(
       `Hello ${shopName || "shop"}, I am interested in ${p.name} (${money(p.price)}).`
     );
