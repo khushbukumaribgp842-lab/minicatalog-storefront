@@ -253,6 +253,21 @@ footer { max-width:1100px; margin:auto; padding:0 20px 30px; text-align:center; 
   $('modal-backdrop').addEventListener('click', event => { if (event.target === $('modal-backdrop')) closeModal(); });
   document.addEventListener('keydown', event => { if (event.key === 'Escape') closeModal(); });
   render();
+  const checkoutAmount = Number(new URLSearchParams(window.location.search).get('checkout'));
+  if (Number.isFinite(checkoutAmount) && checkoutAmount > 0 && checkoutAmount <= 10000000) {
+    openModal('MiniCatalog order checkout', '<p class="helper">Order total from MiniCatalog: demo checkout only. No real money will be transferred.</p><div style="font-size:32px;font-weight:900;margin:18px 0;text-align:center">' + money(checkoutAmount) + '</div><p class="helper">Demo wallet balance: ' + money(state.balance) + '</p><button class="primary-btn" id="confirm-mini-checkout">Simulate demo payment</button><button class="secondary-btn" id="cancel-mini-checkout">Cancel</button>');
+    $('confirm-mini-checkout').addEventListener('click', () => {
+      if (state.balance < checkoutAmount) {
+        openModal('Not enough demo funds', '<p class="helper">Your demo wallet has ' + money(state.balance) + ', but this order needs ' + money(checkoutAmount) + '. Add demo money or cancel. No payment was made.</p><button class="primary-btn" id="close-checkout-result">Done</button>');
+        $('close-checkout-result').addEventListener('click', closeModal);
+        return;
+      }
+      record('MiniCatalog order', -checkoutAmount, 'Demo checkout · no real payment', '🛍');
+      openModal('Demo checkout complete', '<div class="success-state"><div class="success-mark">✓</div><h2>Demo payment simulated</h2><p class="helper">' + money(checkoutAmount) + ' was deducted from the demo balance only. No real payment was made.</p></div><button class="primary-btn" id="finish-mini-checkout">Done</button>');
+      $('finish-mini-checkout').addEventListener('click', closeModal);
+    });
+    $('cancel-mini-checkout').addEventListener('click', closeModal);
+  }
 })();
 </script>
 </body>
