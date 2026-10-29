@@ -414,7 +414,7 @@ body[data-density="compact"] .product .actions button{padding:8px;font-size:12px
         <h2>🛒 Shopping cart <span id="cartCount" class="count">0 items</span></h2>
         <p class="note">Add products to your cart, adjust quantities, and prepare one WhatsApp enquiry for the whole order.</p>
         <div id="cartItems" class="products"></div>
-        <div class="toolbar"><strong>Total: <span id="cartTotal" class="price">₹0</span></strong><div class="actions"><button id="clearCartBtn">Clear cart</button><button id="checkoutBtn" class="green">Checkout on WhatsApp</button></div></div>
+        <div class="toolbar"><strong>Total: <span id="cartTotal" class="price">₹0</span></strong><div class="actions"><button id="clearCartBtn">Clear cart</button><button id="checkoutBtn" class="green">WhatsApp Order</button><button id="quickPayBtn">QuickPay Demo</button><button id="paytmBtn">Paytm (setup needed)</button></div></div>
       </div>
 
       <div class="section">
@@ -906,6 +906,22 @@ $("checkoutBtn").addEventListener("click", () => {
   const number = String(whatsapp || "").replace(/\D/g, "");
   const url = number ? "https://wa.me/" + number + "?text=" + encodeURIComponent(message) : "https://wa.me/?text=" + encodeURIComponent(message);
   window.open(url, "_blank", "noopener,noreferrer");
+});
+
+$("quickPayBtn").addEventListener("click", () => {
+  if (!Object.keys(cart).length) return setStatus("Add a product to your cart first.");
+  const total = Object.entries(cart).reduce((sum, [id, qty]) => {
+    const p = products.find(item => item.id === id);
+    return sum + (p ? p.price * qty : 0);
+  }, 0);
+  setStatus("Opening QuickPay demo for an order totaling " + money(total) + ". This is a demo only; no real payment will be taken.");
+  window.open("./quickpay/", "_blank", "noopener,noreferrer");
+});
+
+$("paytmBtn").addEventListener("click", () => {
+  if (!Object.keys(cart).length) return setStatus("Add a product to your cart first.");
+  setStatus("Paytm checkout needs the seller's official Paytm payment link or merchant integration. No payment was made.");
+  alert("Paytm option selected. To accept real payments, the seller must configure an official Paytm payment link or merchant integration. This prototype has not charged you.");
 });
 
 $("exportSalesBtn").addEventListener("click",()=>{
