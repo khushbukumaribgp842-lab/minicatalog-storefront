@@ -915,13 +915,19 @@ $("quickPayBtn").addEventListener("click", () => {
     return sum + (p ? p.price * qty : 0);
   }, 0);
   setStatus("Opening QuickPay demo for an order totaling " + money(total) + ". This is a demo only; no real payment will be taken.");
-  window.open("./quickpay/", "_blank", "noopener,noreferrer");
+  window.open("./quickpay/?checkout=" + encodeURIComponent(total.toFixed(2)), "_blank", "noopener,noreferrer");
 });
 
 $("paytmBtn").addEventListener("click", () => {
-  if (!Object.keys(cart).length) return setStatus("Add a product to your cart first.");
-  setStatus("Paytm checkout needs the seller's official Paytm payment link or merchant integration. No payment was made.");
-  alert("Paytm option selected. To accept real payments, the seller must configure an official Paytm payment link or merchant integration. This prototype has not charged you.");
+  const lines = Object.entries(cart).map(([id, qty]) => {
+    const p = products.find(item => item.id === id);
+    return p ? {p, qty} : null;
+  }).filter(Boolean);
+  if (!lines.length) return setStatus("Add a product to your cart first.");
+  const total = lines.reduce((sum, line) => sum + line.p.price * line.qty, 0);
+  const summary = lines.map(({p, qty}) => qty + " × " + p.name).join("\\n");
+  alert("PAYTM CHECKOUT PREVIEW\\n\\n" + summary + "\\n\\nOrder total: " + money(total) + "\\n\\nThis is a preview only. Real Paytm payments require the seller's official Paytm payment link or merchant integration. No money was charged.");
+  setStatus("Paytm checkout preview opened. Real payments need official merchant setup.");
 });
 
 $("exportSalesBtn").addEventListener("click",()=>{
