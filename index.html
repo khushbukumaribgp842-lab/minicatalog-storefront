@@ -658,7 +658,19 @@ function element(tag, className, value) {
 
 function render() {
   const query = $("search").value.trim().toLowerCase();
-  const category = $("categoryFilter").value;
+  const categorySelect = $("categoryFilter");
+  const selectedCategory = categorySelect.value;
+  const categories = [...new Set(products.map(p => String(p.category || "Other").trim() || "Other"))]
+    .sort((a, b) => a.localeCompare(b));
+  categorySelect.replaceChildren(element("option", "", "All categories"));
+  categorySelect.options[0].value = "all";
+  categories.forEach(name => {
+    const option = element("option", "", name);
+    option.value = name;
+    categorySelect.appendChild(option);
+  });
+  categorySelect.value = categories.includes(selectedCategory) ? selectedCategory : "all";
+  const category = categorySelect.value;
   const sort = $("sortBy").value;
   const filtered = products.filter(p =>
     (p.name + " " + (p.description || "") + " " + (p.category || "Other")).toLowerCase().includes(query) &&
