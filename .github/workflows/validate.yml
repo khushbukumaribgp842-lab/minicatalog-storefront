@@ -70,8 +70,8 @@ jobs:
               raise SystemExit("Startup duplicate cleanup is missing.")
           if "existingDemoNames" not in html or "missingDemo" not in html:
               raise SystemExit("Demo button does not skip products already in the catalog.")
-          if 'category:seed.category' not in html:
-              raise SystemExit("Known demo product categories are not restored.")
+          if 'category:product.category || seed.category' not in html:
+              raise SystemExit("Known demo categories must be used as fallback without overwriting seller edits.")
           if 'name:"Gaming Mouse",category:"Gaming",price:900,description:""' not in html:
               raise SystemExit("Gaming Mouse demo category migration is missing.")
           if 'product.name.match(/^(.*) \\(Copy\\)$/i)' not in html:
