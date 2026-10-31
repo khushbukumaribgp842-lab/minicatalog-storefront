@@ -992,10 +992,13 @@ function downloadFile(name, content, type) {
 }
 
 $("exportBtn").addEventListener("click", () => {
-  downloadFile("minicatalog-backup.json", JSON.stringify({
-    app:"MiniCatalog", version:4, shopName, shopDescription, whatsapp, products, sales, ratings, themeName, layoutDensity
-  }, null, 2), "application/json");
-  setStatus("Data backup exported.");
+  const backup = {
+    app:"MiniCatalog", version:5, exportedAt:new Date().toISOString(),
+    shopName, shopDescription, whatsapp, products, sales, ratings, cart, themeName, layoutDensity
+  };
+  downloadFile("minicatalog-backup-" + new Date().toISOString().slice(0,10) + ".json",
+    JSON.stringify(backup, null, 2), "application/json");
+  setStatus("Complete data backup exported, including cart and shop settings.");
 });
 
 $("importBtn").addEventListener("click", () => $("backupFile").click());
@@ -1006,8 +1009,27 @@ $("backupFile").addEventListener("change", async e => {
   try {
     const data = JSON.parse(await file.text());
     if (!data || data.app !== "MiniCatalog" ||
+        (data.version !== undefined && ![1,2,3,4,5].includes(data.version)) ||
         !Array.isArray(data.products) || data.products.length > 10000)
       throw new Error("This is not a valid MiniCatalog backup.");
+    if (data.sales !== undefined && (!Array.isArray(data.sales) || data.sales.length > 50000 ||
+        !data.sales.every(s => s && typeof s.name === "string" &&
+          Number.isFinite(s.total) && s.total >= 0 && Number.isFinite(s.qty) &&
+          Number.isInteger(s.qty) && s.qty >= 0))) {
+      throw new Error("The backup contains invalid sales records.");
+    }
+    if (data.cart !== undefined && (!data.cart || typeof data.cart !== "object" ||
+        Array.isArray(data.cart) || Object.keys(data.cart).length > 10000 ||
+        !Object.entries(data.cart).every(([id, qty]) => typeof id === "string" &&
+          Number.isInteger(qty) && qty >= 1 && qty <= 100000))) {
+      throw new Error("The backup contains an invalid cart.");
+    }
+    if (data.ratings !== undefined && (!data.ratings || typeof data.ratings !== "object" ||
+        Array.isArray(data.ratings) || Object.keys(data.ratings).length > 10000 ||
+        !Object.values(data.ratings).every(list => Array.isArray(list) &&
+          list.length <= 10000 && list.every(n => Number.isInteger(n) && n >= 1 && n <= 5)))) {
+      throw new Error("The backup contains invalid ratings.");
+    }
 
     const valid = data.products.every(p =>
       p && typeof p.id === "string" && typeof p.name === "string" &&
@@ -1019,12 +1041,14 @@ $("backupFile").addEventListener("change", async e => {
     if (!confirm("Replace the current catalog with this backup?")) return;
 
     products = data.products.map(p => ({...p,stock:Number.isInteger(p.stock)&&p.stock>=0?p.stock:10}));
-    if(Array.isArray(data.sales))sales=data.sales.filter(s=>s&&typeof s.name==="string"&&Number.isFinite(s.total)&&Number.isFinite(s.qty));
-    if(data.ratings&&typeof data.ratings==="object"&&!Array.isArray(data.ratings))ratings=data.ratings;
+    if(Array.isArray(data.sales))sales=data.sales.map(s=>({...s})); else sales=[];
+    if(data.ratings&&typeof data.ratings==="object"&&!Array.isArray(data.ratings))ratings=data.ratings; else ratings={};
     if(["violet","ocean","emerald","sunset"].includes(data.themeName)){themeName=data.themeName;$("themeSelect").value=themeName;}
     if(["comfortable","compact"].includes(data.layoutDensity)){layoutDensity=data.layoutDensity;$("densitySelect").value=layoutDensity;}
     applyAppearance();
-    cart = Object.fromEntries(Object.entries(cart).filter(([id]) => products.some(p => p.id === id && (cart[id]||0)<=p.stock)));
+    const importedCart = data.cart && typeof data.cart==="object" && !Array.isArray(data.cart) ? data.cart : cart;
+    cart = Object.fromEntries(Object.entries(importedCart).filter(([id,qty]) =>
+      products.some(p => p.id === id && Number.isInteger(qty) && qty >= 1 && qty <= p.stock)));
     shopName = String(data.shopName || "").slice(0,60);
     shopDescription = String(data.shopDescription || "").slice(0,400);
     whatsapp = String(data.whatsapp || "").replace(/\D/g,"").slice(0,15);
