@@ -1,0 +1,1165 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#070b16">
+<link rel="icon" type="image/svg+xml" href="logo.svg">
+<title>MiniCatalog 3.0 — Your Shop, Elevated</title>
+<style>
+:root {
+  --bg:#0b1120; --panel:#121c30; --line:#283750;
+  --text:#f1f5f9; --muted:#9aabc2; --blue:#60a5fa;
+  --green:#34d399;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:system-ui,Arial,sans-serif}
+header{padding:20px 5%;border-bottom:1px solid var(--line);
+  display:flex;justify-content:space-between;align-items:center;gap:12px}
+.logo{font-size:23px;font-weight:850}
+.logo span{color:var(--blue)}
+.tag{font-size:12px;color:var(--muted)}
+main{max-width:1150px;margin:auto;padding:25px 16px}
+h1{font-size:clamp(28px,5vw,42px);margin:0 0 8px}
+h2{font-size:19px;margin:0 0 16px}
+p{color:var(--muted);line-height:1.6}
+.layout{display:grid;grid-template-columns:minmax(250px,330px) 1fr;
+  gap:18px;align-items:start}
+.panel{background:var(--panel);border:1px solid var(--line);
+  border-radius:18px;padding:20px;min-width:0}
+label{display:block;font-size:13px;margin:13px 0 7px}
+input,textarea{width:100%;padding:12px;border-radius:10px;
+  border:1px solid var(--line);background:#0b1425;color:white;
+  font:inherit}
+textarea{resize:vertical;min-height:75px}
+button{border:1px solid var(--line);background:#1c2940;color:white;
+  border-radius:10px;padding:10px 13px;font:inherit;font-weight:650;
+  cursor:pointer}
+button:hover{filter:brightness(1.15)}
+.primary{background:var(--blue);color:#071426;border:0}
+.green{background:var(--green);color:#052219;border:0}
+.danger{color:#fca5a5}
+.full{width:100%;margin-top:15px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.toolbar{display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:12px;margin-bottom:15px}
+.toolbar h2{margin:0}
+.muted,.count{font-size:12px;color:var(--muted)}
+.status{min-height:20px;font-size:13px;color:var(--green)}
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:12px;margin-top:15px}
+.product{border:1px solid var(--line);border-radius:14px;
+  padding:15px;min-width:0;overflow-wrap:anywhere}
+.product h3{font-size:17px;margin:0 0 8px}
+.product p{font-size:13px;white-space:pre-wrap}
+.price{font-size:19px;font-weight:800;color:var(--green)}
+.empty{padding:25px 12px;text-align:center;border:1px dashed var(--line);
+  border-radius:14px;color:var(--muted)}
+.section{margin-top:20px}
+.preview{background:#f8fafc;color:#111827;border-radius:14px;padding:18px}
+.preview h3{margin-top:0}
+.preview p{color:#475569}
+.preview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.preview-card{background:white;border:1px solid #e2e8f0;border-radius:10px;padding:12px;overflow-wrap:anywhere}
+.preview-card p{font-size:13px}
+ .note{font-size:12px;color:var(--muted)}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.stat-card{padding:14px;border:1px solid var(--line);border-radius:14px;background:rgba(7,13,27,.48)}
+.stat-card span{display:block;color:var(--muted);font-size:12px}.stat-card strong{display:block;margin-top:7px;font-size:22px;overflow-wrap:anywhere}
+.stock-pill{display:inline-block;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800;margin:8px 0}
+.stock-ok{background:rgba(52,211,153,.12);color:#6ee7b7}.stock-low{background:rgba(251,191,36,.12);color:#fcd34d}.stock-out{background:rgba(248,113,113,.12);color:#fca5a5}
+.rating-line{font-size:13px;color:#fbbf24;margin:7px 0}
+@media(max-width:760px){.layout{grid-template-columns:1fr}header{padding:16px}}
+@media print{
+  body{background:white;color:black}
+  header,.hero,.form-panel,.toolbar .actions,#search,
+  .section,.product .actions,footer{display:none!important}
+  main{padding:0}.layout{display:block}.panel{background:white;border:0}
+  .products{display:block}.product{break-inside:avoid;border:1px solid #ddd}
+  .product p{color:#333}.price{color:black}
+}
+
+/* MiniCatalog premium visual refresh — functionality and saved-data keys unchanged */
+:root{
+  --bg:#070b16;--panel:#10182b;--line:#263653;--text:#f4f7ff;
+  --muted:#a4b2ca;--blue:#8b9cff;--green:#42e6b2;
+  --accent:#a78bfa;--glow:rgba(139,156,255,.18)
+}
+html{scroll-behavior:smooth}
+body{
+  background:
+    radial-gradient(ellipse at 12% -5%,rgba(124,92,255,.20),transparent 36rem),
+    radial-gradient(ellipse at 95% 15%,rgba(34,211,238,.10),transparent 30rem),
+    var(--bg);
+  letter-spacing:.01em
+}
+header{
+  position:sticky;top:0;z-index:10;
+  background:rgba(7,11,22,.82);backdrop-filter:blur(18px);
+  border-bottom:1px solid rgba(139,156,255,.20);
+  box-shadow:0 8px 32px rgba(0,0,0,.18)
+}
+.logo{letter-spacing:-.045em;font-size:25px}
+.logo span{
+  background:linear-gradient(100deg,#9baaff,#67e8f9);
+  -webkit-background-clip:text;background-clip:text;color:transparent
+}
+.tag{letter-spacing:.14em;text-transform:uppercase;font-weight:750}
+main{padding-top:34px;padding-bottom:44px}
+.hero{
+  position:relative;overflow:hidden;padding:clamp(25px,5vw,46px);
+  margin-bottom:24px;border:1px solid rgba(139,156,255,.25);
+  border-radius:26px;
+  background:linear-gradient(120deg,rgba(24,34,62,.96),rgba(13,25,43,.88));
+  box-shadow:0 22px 70px rgba(0,0,0,.22)
+}
+.hero:after{
+  content:"";position:absolute;width:230px;height:230px;right:-75px;top:-105px;
+  border-radius:50%;border:1px solid rgba(103,232,249,.30);
+  box-shadow:0 0 0 28px rgba(103,232,249,.035),0 0 0 58px rgba(167,139,250,.035);
+  pointer-events:none
+}
+.hero h1{letter-spacing:-.055em;line-height:1.08;max-width:760px}
+.hero p{max-width:690px;margin-bottom:0;font-size:15px}
+.layout{gap:20px}
+.panel{
+  background:linear-gradient(155deg,rgba(17,27,48,.98),rgba(12,20,36,.98));
+  border-color:rgba(137,159,199,.20);border-radius:22px;padding:clamp(17px,2.5vw,24px);
+  box-shadow:0 16px 48px rgba(0,0,0,.17)
+}
+.panel h2{letter-spacing:-.025em}
+label{font-weight:700;color:#dbe6ff}
+input,textarea{
+  background:rgba(5,11,24,.72);border-color:#2b3b5c;border-radius:12px;
+  transition:border-color .18s,box-shadow .18s,background .18s
+}
+input:focus,textarea:focus{
+  outline:none;border-color:#9baaff;background:#0a1428;
+  box-shadow:0 0 0 3px rgba(139,156,255,.16)
+}
+button{
+  border-color:#344564;background:linear-gradient(135deg,#1b2944,#172238);
+  transition:transform .16s,border-color .16s,filter .16s,box-shadow .16s
+}
+button:hover{filter:brightness(1.13);border-color:#8298c5;transform:translateY(-1px)}
+button:active{transform:translateY(0)}
+button:focus-visible{outline:2px solid #a5b4fc;outline-offset:3px}
+button.primary{
+  background:linear-gradient(110deg,#a5b4fc,#67e8f9);color:#091326;
+  box-shadow:0 8px 24px rgba(103,232,249,.12)
+}
+button.green{
+  background:linear-gradient(110deg,#6ee7b7,#34d399);color:#06251d;
+  box-shadow:0 8px 24px rgba(52,211,153,.12)
+}
+button.danger{border-color:rgba(248,113,113,.35);background:rgba(127,29,29,.17);color:#fda4af}
+.full{min-height:44px}
+.toolbar{align-items:flex-start}
+.count{margin-top:5px}
+.status{font-weight:650}
+.products{gap:15px}
+.product{
+  position:relative;background:linear-gradient(155deg,rgba(19,30,52,.96),rgba(12,20,36,.96));
+  border-color:rgba(137,159,199,.23);border-radius:18px;padding:14px;
+  transition:transform .18s,border-color .18s,box-shadow .18s
+}
+.product:hover{transform:translateY(-3px);border-color:rgba(139,156,255,.65);box-shadow:0 16px 32px rgba(0,0,0,.18)}
+.product img{display:block;background:#17243b}
+.product h3{letter-spacing:-.02em;line-height:1.35}
+.product p{min-height:38px}
+.price{letter-spacing:-.025em}
+.product .actions{margin-top:12px}
+.product .actions button{flex:1}
+.empty{background:rgba(8,14,27,.45);border-color:#334565;padding:32px 14px}
+.preview{box-shadow:inset 0 0 0 1px rgba(15,23,42,.04)}
+.preview-card{box-shadow:0 5px 15px rgba(15,23,42,.05)}
+.section{padding-top:2px}
+.section h2{margin-bottom:10px}
+.note{line-height:1.55}
+hr{opacity:.7}
+footer{letter-spacing:.04em}
+@media(max-width:760px){
+  main{padding:20px 12px 34px}
+  .hero{border-radius:20px;padding:25px 20px}
+  .panel{border-radius:18px}
+  header{gap:8px}
+  .tag{font-size:10px;letter-spacing:.08em;text-align:right}
+}
+.appearance-tools{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.appearance-tools h3{font-size:15px;margin:0 0 8px}
+.control-select{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:#0b1425;color:white;font:inherit;min-width:0}
+.filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px}
+body[data-theme="ocean"]{--bg:#071521;--panel:#0c2333;--line:#24516a;--text:#effaff;--muted:#a6c7d8;--blue:#67d5ff;--green:#67e8c4}
+body[data-theme="ocean"] .hero{background:linear-gradient(120deg,#0d3348,#102438);border-color:#27627b}
+body[data-theme="ocean"] .panel,body[data-theme="ocean"] .product{background:linear-gradient(155deg,#0e293a,#0a1c2a);border-color:#24516a}
+body[data-theme="ocean"] button.primary{background:linear-gradient(110deg,#67d5ff,#7cf0df);color:#06202b}
+body[data-theme="emerald"]{--bg:#071710;--panel:#10251c;--line:#285340;--text:#f0fff5;--muted:#a8c9b5;--blue:#86efac;--green:#5ee6a8}
+body[data-theme="emerald"] .hero{background:linear-gradient(120deg,#153d2a,#10251c);border-color:#347753}
+body[data-theme="emerald"] .panel,body[data-theme="emerald"] .product{background:linear-gradient(155deg,#142b20,#0d1e16);border-color:#285340}
+body[data-theme="emerald"] button.primary{background:linear-gradient(110deg,#86efac,#5ee6a8);color:#092416}
+body[data-theme="sunset"]{--bg:#1b0d16;--panel:#2b1724;--line:#5b3044;--text:#fff5f7;--muted:#e0b9c5;--blue:#fda4af;--green:#fdba74}
+body[data-theme="sunset"] .hero{background:linear-gradient(120deg,#54263c,#2b1724);border-color:#754158}
+body[data-theme="sunset"] .panel,body[data-theme="sunset"] .product{background:linear-gradient(155deg,#321b2a,#24131e);border-color:#5b3044}
+body[data-theme="sunset"] button.primary{background:linear-gradient(110deg,#fda4af,#fdba74);color:#31121d}
+body[data-density="compact"] .products{grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:9px}
+body[data-density="compact"] .product{padding:10px;border-radius:13px}
+body[data-density="compact"] .product p{min-height:0;margin:7px 0}
+body[data-density="compact"] .product .actions{gap:5px}
+body[data-density="compact"] .product .actions button{padding:8px;font-size:12px}
+@media(max-width:520px){.filter-grid{grid-template-columns:1fr}}
+ .hero-kicker,.eyebrow{font-size:11px;font-weight:850;letter-spacing:.16em;color:#a5b4fc;text-transform:uppercase}
+.hero-kicker{display:flex;align-items:center;gap:9px;margin-bottom:17px}
+.hero-pulse{width:7px;height:7px;border-radius:50%;background:#67e8f9;box-shadow:0 0 0 5px rgba(103,232,249,.12)}
+.hero h1{font-size:clamp(34px,6vw,58px);max-width:850px}
+.hero-gradient{background:linear-gradient(100deg,#a5b4fc,#67e8f9 75%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:23px}
+.hero-actions button{min-height:46px;padding:12px 17px}
+.quickpay-link{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:12px 17px;border:1px solid rgba(103,232,249,.38);border-radius:10px;background:linear-gradient(120deg,rgba(91,53,213,.30),rgba(103,232,249,.10));color:#e9e7ff;text-decoration:none;font-weight:800;box-shadow:0 8px 24px rgba(91,53,213,.14)}
+.quickpay-link:hover{border-color:#67e8f9;box-shadow:0 10px 28px rgba(103,232,249,.16)}
+.hero-proof{display:flex;gap:10px 20px;flex-wrap:wrap;margin-top:25px;color:#b7c6e0;font-size:12px;font-weight:650}
+.section-heading,.analytics-title{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.section-heading h2{margin:5px 0 0}
+.live-pill{display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(66,230,178,.22);background:rgba(66,230,178,.07);color:#8af0ce;border-radius:999px;padding:6px 10px;font-size:11px;font-weight:750}
+.live-pill i{width:6px;height:6px;background:#42e6b2;border-radius:50%}
+.analytics-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(230px,.8fr);gap:12px;margin-top:14px}
+.analytics-panel{min-width:0;border:1px solid rgba(137,159,199,.2);border-radius:16px;padding:16px;background:rgba(5,11,24,.28)}
+.analytics-title h3{margin:0;font-size:14px}.analytics-title span{font-size:11px;color:var(--muted)}
+.revenue-chart{height:145px;display:flex;align-items:stretch;gap:8px;padding:15px 0 0}
+.chart-day{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:7px}
+.chart-bar-wrap{width:100%;height:100px;display:flex;align-items:flex-end;justify-content:center}
+.chart-bar{width:min(30px,78%);min-height:3px;border-radius:7px 7px 2px 2px;background:linear-gradient(180deg,#67e8f9,#8b9cff);box-shadow:0 3px 12px rgba(103,232,249,.12)}
+.chart-day label{font-size:10px;color:var(--muted);margin:0;white-space:nowrap}
+.chart-day small{font-size:9px;color:#dbeafe;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.analytics-foot{font-size:11px;margin:8px 0 0}
+.highlight-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(137,159,199,.12);font-size:12px;color:var(--muted)}
+.highlight-row:last-child{border-bottom:0}.highlight-row strong{font-size:12px;color:var(--text);text-align:right;overflow-wrap:anywhere;max-width:60%}
+.product{padding:12px}
+.product img.product-image{width:100%;height:190px;object-fit:cover;border-radius:13px;margin-bottom:13px;border:1px solid rgba(137,159,199,.14)}
+.product .product-topline{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:2px 0 8px}
+.product .category-label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:#b9c7e3}
+.product .featured-pill{font-size:9px;letter-spacing:.06em;text-transform:uppercase;font-weight:850;padding:4px 7px;border-radius:999px;background:rgba(167,139,250,.13);color:#d2c4ff}
+.product h3{font-size:17px;min-height:44px}
+.product .price{font-size:22px}
+.product .product-desc{min-height:42px;line-height:1.55}
+.product .actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.product .actions button{min-width:0;padding:9px 7px;font-size:12px}
+.product .actions button:nth-child(3){grid-column:1/-1}
+.preview-card{min-width:0}
+@media(max-width:760px){
+  .analytics-grid{grid-template-columns:1fr}
+  .hero h1{font-size:clamp(32px,9vw,46px)}
+  .hero-proof{gap:8px 14px}
+  .product img.product-image{height:170px}
+  .product .actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:420px){
+  .hero-actions{display:grid;grid-template-columns:1fr}
+  .hero-actions button{width:100%}
+  .hero-proof{display:grid;grid-template-columns:1fr 1fr}
+  .products{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .product{padding:9px;border-radius:14px}
+  .product img.product-image{height:125px}
+  .product h3{font-size:14px;min-height:38px}
+  .product .price{font-size:18px}
+  .product .product-desc{font-size:12px;min-height:45px}
+  .product .actions button{font-size:11px;padding:8px 5px}
+  .stock-pill{font-size:9px;padding:4px 6px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
+}
+
+
+/* Branded MiniCatalog logo and matching browser tab icon */
+.brand{display:inline-flex;align-items:center;gap:10px;color:inherit;text-decoration:none;min-width:0}
+.brand-mark{width:42px;height:42px;flex:0 0 auto;filter:drop-shadow(0 5px 12px rgba(103,232,249,.12))}
+.brand-name{font-size:25px;font-weight:900;letter-spacing:-.055em;white-space:nowrap;color:#f4f7ff}
+.brand-name span{background:linear-gradient(100deg,#a5b4fc,#67e8f9);-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand-version{font-size:10px;font-weight:850;letter-spacing:.08em;padding:4px 6px;border-radius:7px;color:#c4b5fd;background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.28)}
+@media(max-width:520px){.brand{gap:7px}.brand-mark{width:35px;height:35px}.brand-name{font-size:21px}.brand-version{font-size:9px;padding:3px 5px}}
+
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="./" aria-label="MiniCatalog home">
+    <svg class="brand-mark" viewBox="0 0 48 48" role="img" aria-label="MiniCatalog logo">
+      <defs><linearGradient id="brandGradient" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a78bfa"/><stop offset="1" stop-color="#67e8f9"/></linearGradient></defs>
+      <rect x="2" y="2" width="44" height="44" rx="13" fill="#151f37" stroke="#6376b8" stroke-opacity=".65"/>
+      <path d="M13 18h22l-2 18H15z" fill="url(#brandGradient)" opacity=".22"/>
+      <path d="M13 18h22l-2 18H15z" fill="none" stroke="url(#brandGradient)" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M18 18v-3a6 6 0 0 1 12 0v3" fill="none" stroke="url(#brandGradient)" stroke-width="2.2" stroke-linecap="round"/>
+      <rect x="18" y="23" width="5" height="5" rx="1" fill="#a78bfa"/>
+      <rect x="25" y="23" width="5" height="5" rx="1" fill="#67e8f9"/>
+      <rect x="18" y="30" width="5" height="3" rx=".7" fill="#67e8f9"/>
+      <rect x="25" y="30" width="5" height="3" rx=".7" fill="#a78bfa"/>
+    </svg>
+    <span class="brand-name">Mini<span>Catalog</span></span>
+    <span class="brand-version">3.0</span>
+  </a>
+  <div class="tag">YOUR SHOP. YOUR CATALOG.</div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="hero-kicker"><span class="hero-pulse"></span> MINI CATALOG 3.0 · THE SELLER STUDIO</div>
+    <h1>Your products.<br><span class="hero-gradient">A storefront that stands out.</span></h1>
+    <p>Create a polished digital shop in minutes. Organize your products, track the sales you record, preview the customer experience, and export a storefront you can publish online.</p>
+    <div class="hero-actions"><button class="primary" type="button" id="heroAddBtn">＋ Add your first product</button><button type="button" id="heroCatalogBtn">Explore catalog ↓</button><a class="quickpay-link" href="./quickpay/" aria-label="Open QuickPay demo wallet">◈ Open QuickPay</a></div>
+    <div class="hero-proof"><span>✦ Premium product cards</span><span>↗ Sales insights</span><span>▣ Mobile-ready layout</span><span>◈ QuickPay demo wallet</span></div>
+  </section>
+
+  <div class="layout">
+    <section class="panel form-panel">
+      <h2>Shop settings</h2>
+      <label for="shopName">Shop name</label>
+      <input id="shopName" maxlength="60" placeholder="e.g. Daksha Store">
+
+      <label for="shopDescription">About your shop</label>
+      <textarea id="shopDescription" maxlength="400"
+        placeholder="What makes your shop special?"></textarea>
+
+      <label for="whatsapp">WhatsApp number (optional)</label>
+      <input id="whatsapp" inputmode="numeric" maxlength="15"
+        placeholder="91XXXXXXXXXX">
+      <p class="note">Use country code and digits only, e.g. 91 followed
+      by your number. This number is included in the exported shop page.</p>
+
+      <div class="appearance-tools">
+        <h3>Customize your design</h3>
+        <label for="themeSelect">Color theme</label>
+        <select id="themeSelect" class="control-select">
+          <option value="violet">Midnight Violet</option><option value="ocean">Ocean Blue</option>
+          <option value="emerald">Emerald Studio</option><option value="sunset">Sunset Coral</option>
+        </select>
+        <label for="densitySelect">Catalog layout</label>
+        <select id="densitySelect" class="control-select">
+          <option value="comfortable">Comfortable cards</option><option value="compact">Compact grid</option>
+        </select>
+        <p class="note">Your choices are saved on this device and included in the next storefront export.</p>
+      </div>
+
+      <hr style="border-color:var(--line);margin:22px 0">
+      <h2>Add a product</h2>
+      <form id="productForm">
+        <label for="productName">Product name</label>
+        <input id="productName" maxlength="80" required
+          placeholder="Handmade bracelet">
+
+        <label for="productPrice">Price in ₹</label>
+        <input id="productPrice" type="number" min="0"
+          max="10000000" step="0.01" required placeholder="199">
+
+        <label for="productCategory">Category</label>
+        <select id="productCategory" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:#0b1425;color:white;font:inherit">
+          <option>Gaming</option><option>Electronics</option><option>Fashion</option><option>Home</option><option>Books & Stationery</option><option>Beauty</option><option>Sports</option><option>Accessories</option><option>Other</option>
+        </select>
+
+        <label for="productDescription">Description</label>
+        <textarea id="productDescription" maxlength="400" placeholder="Describe the product"></textarea>
+        <label for="productStock">Units in stock</label><input id="productStock" type="number" min="0" max="1000000" step="1" value="10" required>
+        <label for="productImage">Product image URL (optional)</label>
+      <input id="productImage" type="url" placeholder="https://example.com/image.jpg">
+      <p class="note">Use a direct image URL beginning with https://. Click Load demo products to try sample images.</p>
+      <button class="primary full" type="submit">+ Add product</button>
+      <button id="demoBtn" class="full" type="button">Load demo products</button>
+      </form>
+      <p id="status" class="status" aria-live="polite"></p>
+    </section>
+
+    <section class="panel">
+      <div class="toolbar">
+        <div>
+          <h2 id="catalogTitle">Your Catalog</h2>
+          <div id="count" class="count">0 products</div>
+        </div>
+        <div class="actions">
+          <button id="shareBtn" class="green">Share catalog</button>
+          <button id="printBtn">Print / PDF</button>
+        </div>
+      </div>
+
+      <label for="search">Search products</label>
+      <input id="search" placeholder="Find a product">
+      <div class="filter-grid">
+        <div><label for="categoryFilter">Filter by category</label>
+          <select id="categoryFilter" class="control-select">
+            <option value="all">All categories</option><option>Gaming</option><option>Electronics</option><option>Fashion</option><option>Home</option><option>Books & Stationery</option><option>Beauty</option><option>Sports</option><option>Accessories</option><option>Other</option>
+          </select>
+        </div>
+        <div><label for="sortBy">Sort products</label>
+          <select id="sortBy" class="control-select">
+            <option value="featured">Featured / newest first</option><option value="price-low">Price: low to high</option>
+            <option value="price-high">Price: high to low</option><option value="name">Name: A to Z</option>
+            <option value="stock-low">Stock: low to high</option>
+          </select>
+        </div>
+      </div>
+      <div class="section" id="dashboard">
+        <div class="section-heading"><div><div class="eyebrow">BUSINESS OVERVIEW</div><h2>Store analytics</h2></div><span class="live-pill"><i></i> Local records</span></div>
+        <p class="note">Insights use sales you record manually in this browser. WhatsApp enquiries are not automatically confirmed sales.</p>
+        <div class="stats-grid">
+          <div class="stat-card"><span>Products</span><strong id="statProducts">0</strong></div><div class="stat-card"><span>Units in stock</span><strong id="statStock">0</strong></div><div class="stat-card"><span>Stock value</span><strong id="statValue">₹0</strong></div><div class="stat-card"><span>Recorded units sold</span><strong id="statSales">0</strong></div><div class="stat-card"><span>Recorded revenue</span><strong id="statRevenue">₹0</strong></div><div class="stat-card"><span>Low-stock products</span><strong id="statLow">0</strong></div>
+        </div><div class="analytics-grid">
+          <article class="analytics-panel"><div class="analytics-title"><h3>Revenue trend</h3><span>Last 7 days</span></div><div id="revenueChart" class="revenue-chart" role="img" aria-label="Recorded revenue over the last seven days"></div><p id="revenueInsight" class="analytics-foot">Record a sale to start building your trend.</p></article>
+          <article class="analytics-panel"><div class="analytics-title"><h3>Sales highlights</h3><span>All records</span></div><div class="highlight-row"><span>Top product</span><strong id="statTopProduct">—</strong></div><div class="highlight-row"><span>Average sale</span><strong id="statAverageSale">₹0</strong></div><div class="highlight-row"><span>Best sales day</span><strong id="statBestDay">—</strong></div><div class="highlight-row"><span>Recorded orders</span><strong id="statOrders">0</strong></div></article>
+        </div>
+        <div class="actions" style="margin-top:12px"><button id="exportSalesBtn">Export sales report</button><button id="clearSalesBtn" class="danger">Reset sales records</button></div>
+      </div>
+      <div id="products" class="products"></div>
+
+      <div class="section" id="cartSection">
+        <h2>🛒 Shopping cart <span id="cartCount" class="count">0 items</span></h2>
+        <p class="note">Add products to your cart, adjust quantities, and prepare one WhatsApp enquiry for the whole order.</p>
+        <div id="cartItems" class="products"></div>
+        <div class="toolbar"><strong>Total: <span id="cartTotal" class="price">₹0</span></strong><div class="actions"><button id="clearCartBtn">Clear cart</button><button id="checkoutBtn" class="green">WhatsApp Order</button><button id="quickPayBtn">QuickPay Demo</button><button id="paytmBtn">Paytm (setup needed)</button></div></div>
+      </div>
+
+      <div class="section">
+        <h2>Customer storefront preview</h2>
+        <p class="note">This preview uses your current local products.
+        It is not yet a public website.</p>
+        <div class="preview">
+          <h3 id="previewName">Your Shop</h3>
+          <p id="previewDescription">Your shop description will appear here.</p>
+          <div id="previewProducts" class="preview-grid"></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Publish your storefront</h2>
+        <p>Export a self-contained HTML page containing your shop details
+        and products. Upload that file to a static website host to get a
+        public URL.</p>
+        <div class="actions">
+          <button class="primary" id="exportStoreBtn">Export storefront HTML</button>
+          <button id="exportBtn">Export data backup</button>
+          <button id="importBtn">Import backup</button>
+          <button id="clearBtn" class="danger">Clear catalog</button>
+          <input id="backupFile" type="file" accept=".json,application/json" hidden>
+        </div>
+        <p class="note">Each export is a snapshot. Export again after changing
+        products. Do not include private information in a public storefront.</p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer style="text-align:center;padding:25px;color:var(--muted);font-size:12px">
+  MiniCatalog · Independent prototype
+</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const PRODUCTS_KEY = "minicatalog_products_v1";
+const SHOP_KEY = "minicatalog_shop_v1";
+const DESCRIPTION_KEY = "minicatalog_description_v2";
+const WHATSAPP_KEY = "minicatalog_whatsapp_v2";
+const CART_KEY = "minicatalog_cart_v1";
+const SALES_KEY = "minicatalog_sales_v1";
+const RATINGS_KEY = "minicatalog_ratings_v1";
+const THEME_KEY = "minicatalog_theme_v1";
+const DENSITY_KEY = "minicatalog_density_v1";
+let themeName = "violet", layoutDensity = "comfortable";
+try {
+  const savedTheme = localStorage.getItem(THEME_KEY);
+  const savedDensity = localStorage.getItem(DENSITY_KEY);
+  if (["violet","ocean","emerald","sunset"].includes(savedTheme)) themeName = savedTheme;
+  if (["comfortable","compact"].includes(savedDensity)) layoutDensity = savedDensity;
+} catch {}
+let sales = [], ratings = {};
+try { const v=JSON.parse(localStorage.getItem(SALES_KEY)||"[]"); sales=Array.isArray(v)?v.filter(s=>s&&typeof s.name==="string"&&Number.isFinite(s.total)&&Number.isFinite(s.qty)):[]; } catch {}
+try { const v=JSON.parse(localStorage.getItem(RATINGS_KEY)||"{}"); ratings=v&&typeof v==="object"&&!Array.isArray(v)?v:{}; } catch {}
+const DEMO_PRODUCTS = [
+  {name:"Gaming Mouse",category:"Gaming",price:900,description:""},
+  {name:"Classic Notebook",category:"Books & Stationery",price:99,description:"A handy notebook for school, notes and ideas.",image:"https://images.unsplash.com/photo-1531346878377-a5be20888e57?auto=format&fit=crop&w=900&q=80"},
+  {name:"Everyday Backpack",category:"Fashion",price:699,description:"A practical backpack for daily use.",image:"https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=900&q=80"},
+  {name:"Wireless Headphones",category:"Electronics",price:899,description:"Demo listing for headphones. Check real specifications before selling.",image:"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80"},
+  {name:"Water Bottle",category:"Home",price:249,description:"A reusable bottle for everyday hydration.",image:"https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=900&q=80"},
+  {name:"Canvas Tote Bag",category:"Fashion",price:199,description:"A simple reusable bag for carrying everyday items.",image:"https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=80"}
+];
+function demoSeedFor(product) {
+  return DEMO_PRODUCTS.find(seed =>
+    product && product.name === seed.name &&
+    Number(product.price) === seed.price &&
+    String(product.description || "") === seed.description
+  ) || null;
+}
+function normalizeDemoProducts(list) {
+  const seenDemoNames = new Set();
+  const source = Array.isArray(list) ? list : [];
+  return source.filter(product => {
+    if (!product || typeof product.name !== "string") return false;
+    const copy = product.name.match(/^(.*) \(Copy\)$/i);
+    if (copy) {
+      const baseSeed = DEMO_PRODUCTS.find(seed =>
+        seed.name.toLowerCase() === copy[1].trim().toLowerCase() &&
+        Number(product.price) === seed.price &&
+        String(product.description || "") === seed.description
+      );
+      const baseExists = baseSeed && source.some(candidate =>
+        candidate && candidate.name === baseSeed.name &&
+        Number(candidate.price) === baseSeed.price &&
+        String(candidate.description || "") === baseSeed.description
+      );
+      if (baseExists) return false;
+    }
+    const seed = demoSeedFor(product);
+    if (!seed) return true;
+    if (seenDemoNames.has(seed.name)) return false;
+    seenDemoNames.add(seed.name);
+    return true;
+  }).map(product => {
+    const seed = demoSeedFor(product);
+    return seed ? {...product, category:product.category || seed.category, image:product.image || seed.image || ""} : product;
+  });
+}
+
+let products = [];
+let shopName = "";
+let shopDescription = "";
+let whatsapp = "";
+let cart = {};
+
+try {
+  const saved = JSON.parse(localStorage.getItem(PRODUCTS_KEY) || "[]");
+  products = Array.isArray(saved) ? saved.filter(p =>
+    p && typeof p.name === "string" &&
+    Number.isFinite(p.price) && typeof p.id === "string"
+  ).map(p => ({...p, stock:Number.isInteger(p.stock)&&p.stock>=0?p.stock:10})) : [];
+} catch { products = []; }
+const originalProductsSnapshot = JSON.stringify(products);
+products = normalizeDemoProducts(products);
+const catalogMigrationChanged = JSON.stringify(products) !== originalProductsSnapshot;
+
+try {
+  shopName = localStorage.getItem(SHOP_KEY) || "";
+  shopDescription = localStorage.getItem(DESCRIPTION_KEY) || "";
+  whatsapp = localStorage.getItem(WHATSAPP_KEY) || "";
+} catch { shopName = ""; shopDescription = ""; whatsapp = ""; }
+try { const savedCart = JSON.parse(localStorage.getItem(CART_KEY) || "{}"); cart = savedCart && typeof savedCart === "object" && !Array.isArray(savedCart) ? savedCart : {}; } catch { cart = {}; }
+for (const id of Object.keys(cart)) {
+  const qty = Number(cart[id]);
+  const product = products.find(p => p.id === id);
+  if (!Number.isInteger(qty) || qty < 1 || !product || product.stock < 1) delete cart[id];
+  else cart[id] = Math.min(qty, product.stock);
+}
+
+$("shopName").value = shopName;
+$("shopDescription").value = shopDescription;
+$("whatsapp").value = whatsapp;
+$("themeSelect").value = themeName;
+$("densitySelect").value = layoutDensity;
+document.body.dataset.theme = themeName;
+document.body.dataset.density = layoutDensity;
+
+let storageWarning = false;
+function applyAppearance() {
+  document.body.dataset.theme = themeName;
+  document.body.dataset.density = layoutDensity;
+  try {
+    localStorage.setItem(THEME_KEY, themeName);
+    localStorage.setItem(DENSITY_KEY, layoutDensity);
+  } catch (error) {
+    storageWarning = true;
+    console.warn("MiniCatalog could not save appearance preferences:", error);
+  }
+}
+$("themeSelect").addEventListener("change", () => {
+  themeName = $("themeSelect").value;
+  applyAppearance();
+  setStatus("Color theme updated. Export your storefront to publish this look.");
+});
+$("densitySelect").addEventListener("change", () => {
+  layoutDensity = $("densitySelect").value;
+  applyAppearance();
+  setStatus("Catalog layout updated.");
+});
+function save() {
+  try {
+    localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
+    localStorage.setItem(SHOP_KEY, shopName);
+    localStorage.setItem(DESCRIPTION_KEY, shopDescription);
+    localStorage.setItem(WHATSAPP_KEY, whatsapp);
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    localStorage.setItem(SALES_KEY, JSON.stringify(sales));
+    localStorage.setItem(RATINGS_KEY, JSON.stringify(ratings));
+    return true;
+  } catch (error) {
+    storageWarning = true;
+    console.warn("MiniCatalog could not save browser data:", error);
+    return false;
+  }
+}
+// Persist the one-time cleanup of repeated built-in demo listings and categories.
+if (catalogMigrationChanged) save();
+function stockLabel(p){const n=Number.isInteger(p.stock)?p.stock:10;return n===0?"Out of stock":n<=3?"Low stock · "+n+" left":n+" in stock";}
+function stockClass(p){const n=Number.isInteger(p.stock)?p.stock:10;return n===0?"stock-out":n<=3?"stock-low":"stock-ok";}
+function productRating(p){const a=Array.isArray(ratings[p.id])?ratings[p.id].filter(n=>Number.isInteger(n)&&n>=1&&n<=5):[];return {avg:a.length?a.reduce((x,y)=>x+y,0)/a.length:0,count:a.length};}
+function renderDashboard(){
+ const units=products.reduce((n,p)=>n+(Number.isInteger(p.stock)?p.stock:10),0);
+ const value=products.reduce((n,p)=>n+p.price*(Number.isInteger(p.stock)?p.stock:10),0);
+ const totalRevenue=sales.reduce((n,s)=>n+s.total,0);
+ $("statProducts").textContent=products.length;$("statStock").textContent=units;$("statValue").textContent=money(value);
+ $("statSales").textContent=sales.reduce((n,s)=>n+s.qty,0);$("statRevenue").textContent=money(totalRevenue);
+ $("statLow").textContent=products.filter(p=>(Number.isInteger(p.stock)?p.stock:10)<=3).length;
+ renderAnalytics();
+}
+function renderAnalytics(){
+ const now=new Date();const days=[];
+ for(let i=6;i>=0;i--){const d=new Date(now);d.setHours(0,0,0,0);d.setDate(d.getDate()-i);days.push({date:d,key:d.toDateString(),total:0,label:d.toLocaleDateString("en-IN",{weekday:"short"})});}
+ sales.forEach(s=>{const d=new Date(s.date);if(!Number.isFinite(d.getTime()))return;const day=days.find(x=>x.key===new Date(d.getFullYear(),d.getMonth(),d.getDate()).toDateString());if(day)day.total+=Number(s.total)||0;});
+ const max=Math.max(1,...days.map(d=>d.total));const chart=$("revenueChart");chart.replaceChildren();
+ days.forEach(day=>{const col=element("div","chart-day");const amount=element("small","",day.total?money(day.total).replace(/\.00$/,""):"₹0");const wrap=element("div","chart-bar-wrap");const bar=element("div","chart-bar");bar.style.height=Math.max(3,day.total/max*100)+"%";bar.title=day.date.toLocaleDateString("en-IN")+": "+money(day.total);wrap.appendChild(bar);col.append(amount,wrap,element("label","",day.label));chart.appendChild(col);});
+ const todayTotal=days[6].total;$("revenueInsight").textContent=totalRevenueForDays(days)>0?"Last 7 days: "+money(totalRevenueForDays(days))+" recorded. Today: "+money(todayTotal)+".":"No sales recorded in the last 7 days yet.";
+ const productTotals={};sales.forEach(s=>{const name=s.name||"Unknown product";productTotals[name]=(productTotals[name]||0)+(Number(s.qty)||0);});
+ const top=Object.entries(productTotals).sort((a,b)=>b[1]-a[1])[0];
+ $("statTopProduct").textContent=top?top[0]+" ("+top[1]+" sold)":"—";
+ $("statAverageSale").textContent=sales.length?money(totalRevenue/sales.length):money(0);
+ const dayTotals={};sales.forEach(s=>{const d=new Date(s.date);if(Number.isFinite(d.getTime())){const key=d.toLocaleDateString("en-IN",{day:"numeric",month:"short"});dayTotals[key]=(dayTotals[key]||0)+(Number(s.total)||0);}});
+ const best=Object.entries(dayTotals).sort((a,b)=>b[1]-a[1])[0];
+ $("statBestDay").textContent=best?best[0]+" · "+money(best[1]):"—";
+ $("statOrders").textContent=sales.length;
+}
+function totalRevenueForDays(days){return days.reduce((sum,d)=>sum+d.total,0);}
+
+function money(value) {
+  return new Intl.NumberFormat("en-IN", {
+    style:"currency", currency:"INR", maximumFractionDigits:2
+  }).format(value);
+}
+function categoryImage(category){
+ const images={
+  "Gaming":"https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=900&q=82",
+  "Electronics":"https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&w=900&q=82",
+  "Fashion":"https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=82",
+  "Home":"https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=900&q=82",
+  "Books & Stationery":"https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=900&q=82",
+  "Beauty":"https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=900&q=82",
+  "Sports":"https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=900&q=82",
+  "Accessories":"https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&w=900&q=82",
+  "Other":"https://images.unsplash.com/photo-1490312278390-ab64016e0aa9?auto=format&fit=crop&w=900&q=82"
+ };
+ return images[category]||images.Other;
+}
+
+function setStatus(message) {
+  $("status").textContent = storageWarning
+    ? message + " Warning: this browser cannot save changes between visits. Export a data backup before leaving."
+    : message;
+}
+
+function element(tag, className, value) {
+  const el = document.createElement(tag);
+  if (className) el.className = className;
+  if (value !== undefined) el.textContent = value;
+  return el;
+}
+
+function render() {
+  const query = $("search").value.trim().toLowerCase();
+  const categorySelect = $("categoryFilter");
+  const selectedCategory = categorySelect.value;
+  const categories = [...new Set(products.map(p => String(p.category || "Other").trim() || "Other"))]
+    .sort((a, b) => a.localeCompare(b));
+  categorySelect.replaceChildren(element("option", "", "All categories"));
+  categorySelect.options[0].value = "all";
+  categories.forEach(name => {
+    const option = element("option", "", name);
+    option.value = name;
+    categorySelect.appendChild(option);
+  });
+  categorySelect.value = categories.includes(selectedCategory) ? selectedCategory : "all";
+  const category = categorySelect.value;
+  const sort = $("sortBy").value;
+  const filtered = products.filter(p =>
+    (p.name + " " + (p.description || "") + " " + (p.category || "Other")).toLowerCase().includes(query) &&
+    (category === "all" || (p.category || "Other") === category)
+  );
+  filtered.sort((a,b) => sort === "price-low" ? a.price-b.price
+    : sort === "price-high" ? b.price-a.price
+    : sort === "name" ? a.name.localeCompare(b.name)
+    : sort === "stock-low" ? (a.stock ?? 10)-(b.stock ?? 10)
+    : products.indexOf(a)-products.indexOf(b));
+
+  $("catalogTitle").textContent = shopName || "Your Catalog";
+  $("count").textContent = `${filtered.length} product${filtered.length === 1 ? "" : "s"}`;
+  $("previewName").textContent = shopName || "Your Shop";
+  $("previewDescription").textContent =
+    shopDescription || "Welcome to our shop.";
+
+  const list = $("products");
+  list.replaceChildren();
+
+  if (!filtered.length) {
+    list.appendChild(element("div", "empty",
+      products.length ? "No matching products." :
+      "Your catalog is empty. Add your first product."));
+  }
+
+  filtered.forEach(p => {
+    const card = element("article", "product");
+    const fallbackImage=categoryImage(p.category);
+    const img=document.createElement("img");img.className="product-image";img.src=p.image||fallbackImage;img.alt = ""; img.setAttribute("aria-hidden", "true"); img.loading = "lazy";img.onerror=()=>{if(img.src!==fallbackImage)img.src=fallbackImage;else img.style.display="none";};card.appendChild(img);
+    const topLine=element("div","product-topline");topLine.appendChild(element("span","category-label",p.category||"Other"));if(products.indexOf(p)<3)topLine.appendChild(element("span","featured-pill","Featured"));card.appendChild(topLine);
+    card.appendChild(element("h3", "", p.name));
+    card.appendChild(element("div", "price", money(p.price)));
+    card.appendChild(element("p", "product-desc", p.description || "A quality pick from your catalog."));
+    card.appendChild(element("span", "stock-pill "+stockClass(p), stockLabel(p)));
+    const rating=productRating(p);
+    card.appendChild(element("div","rating-line",rating.count?"★ "+rating.avg.toFixed(1)+" · "+rating.count+" local rating(s)":"☆ Not rated yet"));
+    const actions = element("div", "actions");
+    const share = element("button", "", "Share");
+    share.addEventListener("click", () => shareProduct(p));
+
+    const addToCart = element("button", "green", p.stock===0?"Out of stock":"Add to cart");
+    addToCart.disabled=p.stock===0||(cart[p.id]||0)>=p.stock;
+    addToCart.addEventListener("click", () => { if((cart[p.id]||0)>=p.stock)return setStatus("Only "+p.stock+" units are in stock.");cart[p.id]=(cart[p.id]||0)+1;save();render();renderCart();setStatus(p.name+" added to cart."); });
+    const order = element("button", "green", "Order");
+    order.title = "Open WhatsApp with a product enquiry";
+    order.addEventListener("click", () => orderProduct(p));
+
+    const sale=element("button","","Record sale");
+    sale.title="Record a completed sale manually and reduce stock";
+    sale.addEventListener("click",()=>{if(p.stock<=0)return setStatus("This product is out of stock.");const raw=prompt("Units sold for "+p.name+"? In stock: "+p.stock,"1");if(raw===null)return;const qty=Number(raw);if(!Number.isInteger(qty)||qty<1||qty>p.stock)return setStatus("Enter a whole number from 1 to "+p.stock+".");p.stock-=qty;sales.unshift({name:p.name,productId:p.id,qty,total:p.price*qty,date:new Date().toISOString()});if((cart[p.id]||0)>p.stock){if(!p.stock)delete cart[p.id];else cart[p.id]=p.stock;}save();render();renderCart();renderDashboard();setStatus("Sale recorded; stock updated.");});
+    const edit=element("button","","Edit");
+    edit.addEventListener("click",()=>{
+      const name=prompt("Product name:",p.name);if(name===null)return;
+      const priceRaw=prompt("Price in ₹:",String(p.price));if(priceRaw===null)return;
+      const price=Number(priceRaw);
+      const description=prompt("Description:",p.description||"");if(description===null)return;
+      const category=prompt("Category (Gaming, Electronics, Fashion, Home, Books & Stationery, Beauty, Sports, Accessories, Other):",p.category||"Other");if(category===null)return;
+      const stockRaw=prompt("Units in stock:",String(p.stock));if(stockRaw===null)return;
+      const stock=Number(stockRaw);
+      const image=prompt("Image URL (https://) or leave blank:",p.image||"");if(image===null)return;
+      if(!name.trim()||!Number.isFinite(price)||price<0||price>10000000||!Number.isInteger(stock)||stock<0||stock>1000000||(image.trim()&&!/^https:\/\//i.test(image.trim())))return setStatus("Invalid edit. Check name, price, stock and image URL.");
+      p.name=name.trim().slice(0,80);p.price=price;p.description=description.trim().slice(0,400);p.category=category.trim().slice(0,60)||"Other";p.stock=stock;p.image=image.trim();
+      if((cart[p.id]||0)>stock){if(!stock)delete cart[p.id];else cart[p.id]=stock;}
+      save();render();renderCart();renderDashboard();setStatus("Product updated.");
+    });
+    const duplicate=element("button","","Duplicate");
+    duplicate.addEventListener("click",()=>{
+      if(products.length>=10000)return setStatus("Catalog limit reached.");
+      const copy={...p,id:Date.now().toString()+Math.random().toString(36).slice(2,8),name:(p.name+" (Copy)").slice(0,80)};
+      products.unshift(copy);save();render();renderCart();renderDashboard();setStatus("Product duplicated. Edit the copy before publishing.");
+    });
+    const del = element("button", "danger", "Delete");
+    del.addEventListener("click", () => {
+      if (!confirm(`Delete "${p.name}"?`)) return;
+      products = products.filter(item => item.id !== p.id);
+      delete cart[p.id];
+      save(); render(); renderCart(); renderDashboard(); setStatus("Product deleted.");
+    });
+
+    actions.append(share, addToCart, order, sale, edit, duplicate, del);
+    card.appendChild(actions);
+    list.appendChild(card);
+  });
+
+  const preview = $("previewProducts");
+  preview.replaceChildren();
+  products.forEach(p => {
+    const card = element("article", "preview-card");
+    { const fallbackImage=categoryImage(p.category); const img=document.createElement("img"); img.src=p.image||fallbackImage; img.alt = ""; img.setAttribute("aria-hidden", "true"); img.loading = "lazy"; img.style.cssText="width:100%;height:100px;object-fit:cover;border-radius:8px;margin-bottom:8px"; img.onerror=()=>{if(img.src!==fallbackImage)img.src=fallbackImage;else img.style.display="none";}; card.appendChild(img); }
+    card.appendChild(element("strong", "", p.name));
+    card.appendChild(element("p", "muted", p.category || "Other"));
+    card.appendChild(element("p", "", money(p.price)));
+    if (p.description) card.appendChild(element("p", "", p.description));
+    preview.appendChild(card);
+  });
+}
+
+$("heroAddBtn").addEventListener("click",()=>{$("productName").focus();$("productForm").scrollIntoView({behavior:"smooth",block:"center"});});
+$("heroCatalogBtn").addEventListener("click",()=>{$("products").scrollIntoView({behavior:"smooth",block:"start"});});
+$("productForm").addEventListener("submit", e => {
+  e.preventDefault();
+  shopName = $("shopName").value.trim();
+  shopDescription = $("shopDescription").value.trim();
+  whatsapp = $("whatsapp").value.replace(/\D/g, "");
+
+  const name = $("productName").value.trim();
+  const price = Number($("productPrice").value);
+  const description = $("productDescription").value.trim();
+  const category = $("productCategory").value || "Other";
+  const image = $("productImage").value.trim();
+  if (image && !/^https:\/\//i.test(image)) { setStatus("Image URL must begin with https://."); return; }
+
+  if (!shopName || !name || !Number.isFinite(price) ||
+      price < 0 || price > 10000000) {
+    setStatus("Enter a shop name, product name and valid price.");
+    return;
+  }
+
+  const stock=Number($("productStock").value);
+  if(!Number.isInteger(stock)||stock<0||stock>1000000){setStatus("Stock must be a whole number from 0 to 1,000,000.");return;}
+  products.unshift({
+    id: Date.now().toString() + Math.random().toString(36).slice(2,8),
+    name, price, description, image, category, stock
+  });
+  save(); render(); renderCart(); renderDashboard();
+  $("productName").value = "";
+  $("productPrice").value = "";
+  $("productDescription").value = "";
+  $("productStock").value = "10";
+  $("productCategory").value = "Gaming";
+  $("productImage").value = "";
+  $("productName").focus();
+  setStatus("Product added.");
+});
+
+function saveSettings() {
+  shopName = $("shopName").value.trim();
+  shopDescription = $("shopDescription").value.trim();
+  whatsapp = $("whatsapp").value.replace(/\D/g, "").slice(0,15);
+  $("whatsapp").value = whatsapp;
+  save(); render();
+}
+["shopName","shopDescription","whatsapp"].forEach(id => {
+  $(id).addEventListener("change", saveSettings);
+});
+$("search").addEventListener("input", render);
+$("categoryFilter").addEventListener("change", render);
+$("sortBy").addEventListener("change", render);
+$("demoBtn").addEventListener("click", () => {
+  try {
+    if (products.length && !confirm("Add any missing demo products to your existing catalog?")) return;
+    const existingDemoNames = new Set(products.map(demoSeedFor).filter(Boolean).map(p => p.name));
+    const missingDemo = DEMO_PRODUCTS.filter(p => !existingDemoNames.has(p.name));
+    if (!missingDemo.length) {
+      setStatus("Demo products are already in your catalog. No duplicates were added.");
+      return;
+    }
+    const stamp = Date.now();
+    missingDemo.forEach((p,i) => products.push({
+      ...p,
+      id:"demo-"+p.name.toLowerCase().replace(/[^a-z0-9]+/g,"-")+"-"+stamp+"-"+i,
+      stock:10
+    }));
+    render();
+    renderCart();
+    renderDashboard();
+    try {
+      save();
+      setStatus("Added "+missingDemo.length+" missing demo product(s). Sample listings only; check details before selling.");
+    } catch (storageError) {
+      setStatus("Added demo products for this page, but the browser could not save them. Export a backup and check browser storage settings.");
+      console.error("MiniCatalog storage error:", storageError);
+    }
+  } catch (error) {
+    setStatus("Could not load demo products: " + (error && error.message ? error.message : "unknown error") + ". Refresh the page and try again.");
+    console.error("MiniCatalog demo button error:", error);
+  }
+});
+$("printBtn").addEventListener("click", () => window.print());
+
+function renderCart() {
+  const box = $("cartItems");
+  box.replaceChildren();
+  let total = 0, count = 0;
+  for (const [id, qty] of Object.entries(cart)) {
+    const p = products.find(item => item.id === id);
+    if (!p || qty < 1) continue;
+    total += p.price * qty; count += qty;
+    const card = element("article", "product");
+    card.appendChild(element("h3", "", p.name));
+    card.appendChild(element("div", "price", money(p.price * qty)));
+    card.appendChild(element("p", "muted", money(p.price) + " each"));
+    const controls = element("div", "actions");
+    const minus = element("button", "", "−");
+    minus.setAttribute("aria-label", "Decrease quantity of " + p.name);
+    minus.addEventListener("click", () => { if (cart[id] <= 1) delete cart[id]; else cart[id]--; save(); renderCart(); });
+    const quantity = element("strong", "", "Qty: " + qty);
+    const plus = element("button", "", "+");
+    plus.setAttribute("aria-label", "Increase quantity of " + p.name);
+    plus.disabled=qty>=p.stock;
+    plus.addEventListener("click", () => { if((cart[id]||0)>=p.stock)return setStatus("Only "+p.stock+" units are in stock.");cart[id]=Math.min(p.stock,(cart[id]||0)+1);save();render();renderCart(); });
+    const remove = element("button", "danger", "Remove");
+    remove.addEventListener("click", () => { delete cart[id]; save(); renderCart(); });
+    controls.append(minus, quantity, plus, remove); card.appendChild(controls); box.appendChild(card);
+  }
+  $("cartCount").textContent = count + " item" + (count === 1 ? "" : "s");
+  $("cartTotal").textContent = money(total);
+  if (!count) box.appendChild(element("div", "empty", "Your cart is empty. Click Add to cart on a product."));
+}
+
+$("clearCartBtn").addEventListener("click", () => {
+  if (!Object.keys(cart).length) return;
+  if (!confirm("Remove all items from your cart?")) return;
+  cart = {}; save(); renderCart(); setStatus("Cart cleared. Your catalog products are unchanged.");
+});
+
+$("checkoutBtn").addEventListener("click", () => {
+  const lines = Object.entries(cart).map(([id,qty]) => {
+    const p = products.find(item => item.id === id);
+    return p ? {p,qty} : null;
+  }).filter(Boolean);
+  if (!lines.length) return setStatus("Add a product to your cart first.");
+  const total = lines.reduce((sum,line) => sum + line.p.price * line.qty, 0);
+  const message = [
+    "Hello " + (shopName || "shop") + "! I would like to enquire about this order:",
+    ...lines.map(({p,qty}) => `${qty} × ${p.name} — ${money(p.price * qty)}`),
+    "Estimated item total: " + money(total),
+    "Please confirm availability, delivery charges and payment options."
+  ].join("\n");
+  const number = String(whatsapp || "").replace(/\D/g, "");
+  const url = number ? "https://wa.me/" + number + "?text=" + encodeURIComponent(message) : "https://wa.me/?text=" + encodeURIComponent(message);
+  window.open(url, "_blank", "noopener,noreferrer");
+});
+
+$("quickPayBtn").addEventListener("click", () => {
+  if (!Object.keys(cart).length) return setStatus("Add a product to your cart first.");
+  const total = Object.entries(cart).reduce((sum, [id, qty]) => {
+    const p = products.find(item => item.id === id);
+    return sum + (p ? p.price * qty : 0);
+  }, 0);
+  setStatus("Opening QuickPay demo for an order totaling " + money(total) + ". This is a demo only; no real payment will be taken.");
+  window.open("./quickpay/?checkout=" + encodeURIComponent(total.toFixed(2)), "_blank", "noopener,noreferrer");
+});
+
+$("paytmBtn").addEventListener("click", () => {
+  const lines = Object.entries(cart).map(([id, qty]) => {
+    const p = products.find(item => item.id === id);
+    return p ? {p, qty} : null;
+  }).filter(Boolean);
+  if (!lines.length) return setStatus("Add a product to your cart first.");
+  const total = lines.reduce((sum, line) => sum + line.p.price * line.qty, 0);
+  const summary = lines.map(({p, qty}) => qty + " × " + p.name).join("\\n");
+  alert("PAYTM CHECKOUT PREVIEW\\n\\n" + summary + "\\n\\nOrder total: " + money(total) + "\\n\\nThis is a preview only. Real Paytm payments require the seller's official Paytm payment link or merchant integration. No money was charged.");
+  setStatus("Paytm checkout preview opened. Real payments need official merchant setup.");
+});
+
+$("exportSalesBtn").addEventListener("click",()=>{
+ downloadFile("minicatalog-sales-report.csv","date,product,quantity,total\n"+sales.map(s=>[JSON.stringify(s.date),JSON.stringify(s.name),s.qty,s.total].join(",")).join("\n"),"text/csv;charset=utf-8");
+ setStatus("Sales report exported. It includes only manually recorded sales in this browser.");
+});
+$("clearSalesBtn").addEventListener("click",()=>{if(!sales.length)return setStatus("No sales records to reset.");if(!confirm("Reset sales history? Product stock will not be restored."))return;sales=[];save();renderDashboard();setStatus("Sales records reset.");});
+function catalogText() {
+  return [shopName || "My Shop", shopDescription, "",
+    ...products.flatMap((p,i) => [
+      `${i+1}. ${p.name} — ${money(p.price)}`,
+      p.description || "", ""
+    ]),
+    "Contact the shop for details."
+  ].filter((line,i,arr) => line !== "" || arr[i-1] !== "").join("\n");
+}
+
+function productEnquiryMessage(p) {
+  return [
+    "Hello " + (shopName || "shop") + "!",
+    "I am interested in: " + p.name,
+    "Price: " + money(p.price),
+    p.description ? "Details: " + p.description : "",
+    "Is this item available?"
+  ].filter(Boolean).join("\n");
+}
+
+function orderProduct(p) {
+  const message = encodeURIComponent(productEnquiryMessage(p));
+  const number = String(whatsapp || "").replace(/\D/g, "");
+  const destination = number
+    ? "https://wa.me/" + number + "?text=" + message
+    : "https://wa.me/?text=" + message;
+  window.open(destination, "_blank", "noopener,noreferrer");
+}
+
+function shareProduct(p) {
+  const message = [
+    shopName || "My Shop", p.name, "Price: " + money(p.price),
+    p.description, "Message us for details."
+  ].filter(Boolean).join("\n");
+  window.open("https://wa.me/?text=" + encodeURIComponent(message),
+    "_blank", "noopener,noreferrer");
+}
+
+$("shareBtn").addEventListener("click", () => {
+  if (!products.length) return setStatus("Add a product before sharing.");
+  window.open("https://wa.me/?text=" + encodeURIComponent(catalogText()),
+    "_blank", "noopener,noreferrer");
+});
+
+function downloadFile(name, content, type) {
+  const blob = new Blob([content], {type});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+$("exportBtn").addEventListener("click", () => {
+  downloadFile("minicatalog-backup.json", JSON.stringify({
+    app:"MiniCatalog", version:4, shopName, shopDescription, whatsapp, products, sales, ratings, themeName, layoutDensity
+  }, null, 2), "application/json");
+  setStatus("Data backup exported.");
+});
+
+$("importBtn").addEventListener("click", () => $("backupFile").click());
+
+$("backupFile").addEventListener("change", async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const data = JSON.parse(await file.text());
+    if (!data || data.app !== "MiniCatalog" ||
+        !Array.isArray(data.products) || data.products.length > 10000)
+      throw new Error("This is not a valid MiniCatalog backup.");
+
+    const valid = data.products.every(p =>
+      p && typeof p.id === "string" && typeof p.name === "string" &&
+      typeof p.description === "string" && (p.category === undefined || typeof p.category === "string") && Number.isFinite(p.price) &&
+      p.price >= 0 && p.price <= 10000000 &&
+      (p.image === undefined || (typeof p.image === "string" && (!p.image || /^https:\/\//i.test(p.image))))
+    );
+    if (!valid) throw new Error("The backup contains invalid products.");
+    if (!confirm("Replace the current catalog with this backup?")) return;
+
+    products = data.products.map(p => ({...p,stock:Number.isInteger(p.stock)&&p.stock>=0?p.stock:10}));
+    if(Array.isArray(data.sales))sales=data.sales.filter(s=>s&&typeof s.name==="string"&&Number.isFinite(s.total)&&Number.isFinite(s.qty));
+    if(data.ratings&&typeof data.ratings==="object"&&!Array.isArray(data.ratings))ratings=data.ratings;
+    if(["violet","ocean","emerald","sunset"].includes(data.themeName)){themeName=data.themeName;$("themeSelect").value=themeName;}
+    if(["comfortable","compact"].includes(data.layoutDensity)){layoutDensity=data.layoutDensity;$("densitySelect").value=layoutDensity;}
+    applyAppearance();
+    cart = Object.fromEntries(Object.entries(cart).filter(([id]) => products.some(p => p.id === id && (cart[id]||0)<=p.stock)));
+    shopName = String(data.shopName || "").slice(0,60);
+    shopDescription = String(data.shopDescription || "").slice(0,400);
+    whatsapp = String(data.whatsapp || "").replace(/\D/g,"").slice(0,15);
+    $("shopName").value = shopName;
+    $("shopDescription").value = shopDescription;
+    $("whatsapp").value = whatsapp;
+    save(); render(); renderCart(); renderDashboard(); setStatus("Backup imported.");
+  } catch(err) { setStatus(err.message || "Import failed."); }
+  finally { e.target.value = ""; }
+});
+
+$("clearBtn").addEventListener("click", () => {
+  if (!confirm("Delete all products and shop settings from this browser?")) return;
+  products = []; cart = {}; shopName = ""; shopDescription = ""; whatsapp = "";
+  $("shopName").value = "";
+  $("shopDescription").value = "";
+  $("whatsapp").value = "";
+  save(); render(); renderCart(); renderDashboard(); setStatus("Catalog cleared.");
+});
+
+/* Generate a standalone customer-facing page.
+   All seller-provided text is escaped before inclusion in HTML. */
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, ch => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  })[ch]);
+}
+
+function makeStorefront() {
+  const safeName = escapeHTML(shopName || "My Shop");
+  const safeDescription = escapeHTML(shopDescription || "Welcome to our shop.");
+  const safeProducts = products.map(p => {
+    const name = escapeHTML(p.name);
+    const category = escapeHTML(p.category || "Other");
+    const stock=Number.isInteger(p.stock)&&p.stock>=0?p.stock:10;
+    const stockText=stock===0?"Out of stock":stock<=3?"Low stock · "+stock+" left":stock+" in stock";
+    const description = escapeHTML(p.description || "");
+    const price = escapeHTML(money(p.price));
+    const imageUrl = typeof p.image === "string" && /^https:\/\//i.test(p.image) ? p.image : categoryImage(p.category);
+    const image = '<img class="product-image" src="' + escapeHTML(imageUrl) + '" alt="' + name + '" loading="lazy">';
+    const message = encodeURIComponent(
+      `Hello ${shopName || "shop"}, I am interested in ${p.name} (${money(p.price)}).`
+    );
+    const link = whatsapp
+      ? `<a class="order" href="https://wa.me/${whatsapp}?text=${message}" target="_blank" rel="noopener noreferrer">${stock===0?"Currently unavailable":"Ask about this item"}</a>`
+      : `<a class="order" href="https://wa.me/?text=${message}" target="_blank" rel="noopener noreferrer">${stock===0?"Currently unavailable":"Ask about this item"}</a>`;
+    return `<article class="product" data-category="${category}" data-price="${p.price}" data-name="${name.toLowerCase()}">${image}<div class="category">${category}</div><h2>${name}</h2><div class="price">${price}</div><div class="category">${escapeHTML(stockText)}</div><p>${description}</p><div class="rating-line">Rate this product: ${[1,2,3,4,5].map(n=>`<button type="button" data-product="${escapeHTML(p.id)}" data-rating="${n}" aria-label="Rate ${n} out of 5">${"★".repeat(n)}</button>`).join(" ")}<span class="rating-result" data-result="${escapeHTML(p.id)}"></span></div>${link}</article>`;
+  }).join("\n");
+
+  return `<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="${safeDescription}">
+<title>${safeName} | Shop</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f1f5f9;color:#172033;
+font:16px system-ui,Arial,sans-serif}.hero{padding:42px 18px;background:#101827;
+color:white;text-align:center}.hero h1{font-size:clamp(30px,6vw,48px);margin:0 0 10px}
+.hero p{max-width:650px;margin:auto;color:#cbd5e1;line-height:1.6}
+main{max-width:1000px;margin:auto;padding:25px 16px}
+.tools{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:18px}.tools input,.tools select{flex:1;min-width:150px;padding:10px;border:1px solid #cbd5e1;border-radius:9px;background:white;color:#172033;font:inherit}.tools button{padding:10px;border:1px solid #cbd5e1;border-radius:9px;background:white;color:#172033}.tools span{align-self:center;color:#64748b;font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+ .category{font-size:12px;color:#64748b;font-weight:700;margin-bottom:8px}.product{background:white;border:1px solid #dbe3ee;border-radius:16px;padding:20px;
+overflow-wrap:anywhere}.product h2{font-size:19px;margin:0 0 12px}.product-image{display:block;width:100%;height:180px;object-fit:cover;border-radius:10px;margin-bottom:14px;background:#e2e8f0}
+ .price{font-weight:800;font-size:22px;color:#047857}.rating-line{font-size:13px;color:#b45309;margin:9px 0}.rating-line button{padding:3px 5px;margin:2px;background:#fff7ed;color:#92400e;border:1px solid #fed7aa;font-size:11px}.rating-result{display:block;color:#64748b;margin-top:4px}.product p{color:#475569;line-height:1.6;
+white-space:pre-wrap}.order{display:inline-block;margin-top:8px;background:#047857;
+color:white;text-decoration:none;padding:10px 13px;border-radius:9px}
+.empty{color:#64748b;text-align:center;padding:35px}
+footer{text-align:center;color:#64748b;padding:25px;font-size:12px}
+body[data-theme="ocean"]{background:#071521;color:#effaff}
+body[data-theme="ocean"] .hero{background:#0d3348}
+body[data-theme="ocean"] .product{background:#0e293a;border-color:#24516a;color:#effaff}
+body[data-theme="ocean"] .product p{color:#a6c7d8}
+body[data-theme="ocean"] .price{color:#67e8c4}
+body[data-theme="emerald"]{background:#071710;color:#f0fff5}
+body[data-theme="emerald"] .hero{background:#153d2a}
+body[data-theme="emerald"] .product{background:#142b20;border-color:#285340;color:#f0fff5}
+body[data-theme="emerald"] .product p{color:#a8c9b5}
+body[data-theme="emerald"] .price{color:#5ee6a8}
+body[data-theme="sunset"]{background:#1b0d16;color:#fff5f7}
+body[data-theme="sunset"] .hero{background:#54263c}
+body[data-theme="sunset"] .product{background:#321b2a;border-color:#5b3044;color:#fff5f7}
+body[data-theme="sunset"] .product p{color:#e0b9c5}
+body[data-theme="sunset"] .price{color:#fdba74}
+body[data-density="compact"] .grid{grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+body[data-density="compact"] .product{padding:13px}
+</style></head><body data-theme="${themeName}" data-density="${layoutDensity}">
+<header class="hero"><h1>${safeName}</h1><p>${safeDescription}</p></header>
+<main><section class="tools"><input id="shopSearch" type="search" placeholder="Search products..." aria-label="Search products"><select id="shopCategory" aria-label="Filter by category"><option value="">All categories</option>${[...new Set(products.map(p=>p.category||"Other"))].map(cat=>`<option value="${escapeHTML(cat)}">${escapeHTML(cat)}</option>`).join("")}</select><select id="shopSort" aria-label="Sort products"><option value="featured">Featured</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option><option value="name">Name: A to Z</option></select><button type="button" id="showSaved">Saved items ♥</button><span id="resultCount"></span></section><div class="grid" id="shopGrid">${safeProducts || '<div class="empty">Products coming soon.</div>'}</div></main>
+<footer>Contact the seller for availability, delivery and payment details.</footer>
+<script>
+const ratingKey="minicatalog_customer_ratings_v1";let customerRatings={};
+try{customerRatings=JSON.parse(localStorage.getItem(ratingKey)||"{}")||{};}catch{}
+document.querySelectorAll("[data-product][data-rating]").forEach(button=>button.addEventListener("click",()=>{
+ const id=button.getAttribute("data-product"),value=Number(button.getAttribute("data-rating"));if(!id||value<1||value>5)return;
+ customerRatings[id]=value;try{localStorage.setItem(ratingKey,JSON.stringify(customerRatings));}catch{}
+ const result=[...document.querySelectorAll("[data-result]")].find(el=>el.getAttribute("data-result")===id);if(result)result.textContent="Your rating: "+value+"/5 (saved on this device)";
+}));
+document.querySelectorAll("[data-result]").forEach(el=>{const v=customerRatings[el.getAttribute("data-result")];if(v)el.textContent="Your rating: "+v+"/5 (saved on this device)";});
+const savedKey="minicatalog_saved_items_v1";let savedItems=[];
+try{savedItems=JSON.parse(localStorage.getItem(savedKey)||"[]");if(!Array.isArray(savedItems))savedItems=[];}catch{savedItems=[];}
+document.querySelectorAll(".product").forEach(card=>{
+ const title=card.querySelector("h2");if(!title)return;
+ const saveBtn=document.createElement("button");saveBtn.type="button";saveBtn.className="save-item";
+ const id=card.querySelector("[data-product]")?.getAttribute("data-product")||title.textContent;
+ const update=()=>{saveBtn.textContent=savedItems.includes(id)?"♥ Saved":"♡ Save item";};
+ update();saveBtn.addEventListener("click",()=>{savedItems=savedItems.includes(id)?savedItems.filter(x=>x!==id):[...savedItems,id];try{localStorage.setItem(savedKey,JSON.stringify(savedItems));}catch{}update();});
+ const order=card.querySelector(".order");if(order)order.insertAdjacentElement("beforebegin",saveBtn);
+});
+const grid=document.getElementById("shopGrid");
+function filterStore(){
+ const q=document.getElementById("shopSearch").value.trim().toLowerCase(),cat=document.getElementById("shopCategory").value,sort=document.getElementById("shopSort").value,onlySaved=document.getElementById("showSaved").dataset.active==="1";
+ const cards=[...grid.querySelectorAll(".product")];
+ cards.forEach(card=>{const id=card.querySelector("[data-product]")?.getAttribute("data-product")||card.querySelector("h2")?.textContent;const match=card.dataset.name.includes(q)&&(!cat||card.dataset.category===cat)&&(!onlySaved||savedItems.includes(id));card.hidden=!match;});
+ const visible=cards.filter(card=>!card.hidden);
+ visible.sort((a,b)=>sort==="low"?Number(a.dataset.price)-Number(b.dataset.price):sort==="high"?Number(b.dataset.price)-Number(a.dataset.price):sort==="name"?a.dataset.name.localeCompare(b.dataset.name):0).forEach(card=>grid.appendChild(card));
+ document.getElementById("resultCount").textContent=visible.length+" item(s)";
+}
+["shopSearch","shopCategory","shopSort"].forEach(id=>document.getElementById(id).addEventListener(id==="shopSearch"?"input":"change",filterStore));
+document.getElementById("showSaved").addEventListener("click",e=>{e.currentTarget.dataset.active=e.currentTarget.dataset.active==="1"?"0":"1";filterStore();});
+filterStore();
+<\/script>
+</body></html>`;
+}
+
+$("exportStoreBtn").addEventListener("click", () => {
+  saveSettings();
+  if (!products.length && !confirm("Export a storefront with no products?")) return;
+  downloadFile("storefront.html", makeStorefront(), "text/html;charset=utf-8");
+  setStatus("Storefront exported. Open storefront.html to preview it.");
+});
+
+render();
+renderCart();
+renderDashboard();
+</script>
+</body>
+</html>
