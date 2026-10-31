@@ -869,14 +869,14 @@ function renderCart() {
     const controls = element("div", "actions");
     const minus = element("button", "", "−");
     minus.setAttribute("aria-label", "Decrease quantity of " + p.name);
-    minus.addEventListener("click", () => { if (cart[id] <= 1) delete cart[id]; else cart[id]--; save(); renderCart(); });
+    minus.addEventListener("click", () => { if (cart[id] <= 1) delete cart[id]; else cart[id]--; save(); render(); renderCart(); });
     const quantity = element("strong", "", "Qty: " + qty);
     const plus = element("button", "", "+");
     plus.setAttribute("aria-label", "Increase quantity of " + p.name);
     plus.disabled=qty>=p.stock;
     plus.addEventListener("click", () => { if((cart[id]||0)>=p.stock)return setStatus("Only "+p.stock+" units are in stock.");cart[id]=Math.min(p.stock,(cart[id]||0)+1);save();render();renderCart(); });
     const remove = element("button", "danger", "Remove");
-    remove.addEventListener("click", () => { delete cart[id]; save(); renderCart(); });
+    remove.addEventListener("click", () => { delete cart[id]; save(); render(); renderCart(); });
     controls.append(minus, quantity, plus, remove); card.appendChild(controls); box.appendChild(card);
   }
   $("cartCount").textContent = count + " item" + (count === 1 ? "" : "s");
@@ -887,7 +887,7 @@ function renderCart() {
 $("clearCartBtn").addEventListener("click", () => {
   if (!Object.keys(cart).length) return;
   if (!confirm("Remove all items from your cart?")) return;
-  cart = {}; save(); renderCart(); setStatus("Cart cleared. Your catalog products are unchanged.");
+  cart = {}; save(); render(); renderCart(); setStatus("Cart cleared. Your catalog products are unchanged.");
 });
 
 $("checkoutBtn").addEventListener("click", () => {
@@ -931,7 +931,8 @@ $("paytmBtn").addEventListener("click", () => {
 });
 
 $("exportSalesBtn").addEventListener("click",()=>{
- downloadFile("minicatalog-sales-report.csv","date,product,quantity,total\n"+sales.map(s=>[JSON.stringify(s.date),JSON.stringify(s.name),s.qty,s.total].join(",")).join("\n"),"text/csv;charset=utf-8");
+ const csvCell = value => '"' + String(value ?? "").replace(/"/g, '""') + '"';
+ downloadFile("minicatalog-sales-report.csv","\uFEFF"+["date","product","quantity","total"].map(csvCell).join(",")+"\r\n"+sales.map(s=>[s.date,s.name,s.qty,s.total].map(csvCell).join(",")).join("\r\n"),"text/csv;charset=utf-8");
  setStatus("Sales report exported. It includes only manually recorded sales in this browser.");
 });
 $("clearSalesBtn").addEventListener("click",()=>{if(!sales.length)return setStatus("No sales records to reset.");if(!confirm("Reset sales history? Product stock will not be restored."))return;sales=[];save();renderDashboard();setStatus("Sales records reset.");});
@@ -1031,12 +1032,18 @@ $("backupFile").addEventListener("change", async e => {
       throw new Error("The backup contains invalid ratings.");
     }
 
-    const valid = data.products.every(p =>
-      p && typeof p.id === "string" && typeof p.name === "string" &&
-      typeof p.description === "string" && (p.category === undefined || typeof p.category === "string") && Number.isFinite(p.price) &&
-      p.price >= 0 && p.price <= 10000000 &&
-      (p.image === undefined || (typeof p.image === "string" && (!p.image || /^https:\/\//i.test(p.image))))
-    );
+    const importedIds = new Set();
+    const valid = data.products.every(p => {
+      if (!p || typeof p.id !== "string" || !p.id || p.id.length > 100 || importedIds.has(p.id) ||
+          typeof p.name !== "string" || !p.name.trim() || p.name.length > 80 ||
+          typeof p.description !== "string" || p.description.length > 400 ||
+          (p.category !== undefined && (typeof p.category !== "string" || p.category.length > 60)) ||
+          !Number.isFinite(p.price) || p.price < 0 || p.price > 10000000 ||
+          (p.stock !== undefined && (!Number.isInteger(p.stock) || p.stock < 0 || p.stock > 1000000)) ||
+          (p.image !== undefined && (typeof p.image !== "string" || (p.image && !/^https:\/\//i.test(p.image))))) return false;
+      importedIds.add(p.id);
+      return true;
+    });
     if (!valid) throw new Error("The backup contains invalid products.");
     if (!confirm("Replace the current catalog with this backup?")) return;
 
