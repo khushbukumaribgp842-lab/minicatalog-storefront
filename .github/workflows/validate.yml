@@ -45,7 +45,7 @@ jobs:
               'id="themeSelect"', 'id="densitySelect"', 'id="sortBy"',
               'minicatalog_theme_v1', 'minicatalog_density_v1',
               'minicatalog_cart_v1', 'minicatalog_sales_v1',
-              'Checkout on WhatsApp', 'Export storefront HTML',
+              'WhatsApp Order', 'Export storefront HTML',
               'const DEMO_PRODUCTS =', 'normalizeDemoProducts(products)',
               'Demo products are already in your catalog. No duplicates were added.'
           ]
