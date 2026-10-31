@@ -86,3 +86,23 @@ jobs:
               raise SystemExit("Both catalog and preview images should be decorative to avoid duplicate labels.")
           print("Demo deduplication, category migration and preview rendering checks passed.")
           PY
+
+      - name: Check cart refresh, CSV escaping and backup validation
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          html = Path("index.html").read_text(encoding="utf-8")
+          checks = {
+              "cart decrement refreshes product cards": 'else cart[id]--; save(); render(); renderCart();' in html,
+              "cart removal refreshes product cards": 'delete cart[id]; save(); render(); renderCart();' in html,
+              "clear cart refreshes product cards": 'cart = {}; save(); render(); renderCart(); setStatus("Cart cleared.' in html,
+              "CSV uses standard quote escaping": 'replace(/"/g, \'""\')' in html and 'map(csvCell).join(",")' in html,
+              "backup rejects duplicate product IDs": 'importedIds.has(p.id)' in html,
+              "backup validates stock bounds": 'p.stock > 1000000' in html,
+          }
+          failed = [name for name, passed in checks.items() if not passed]
+          for name, passed in checks.items():
+              print(("PASS" if passed else "FAIL") + ": " + name)
+          if failed:
+              raise SystemExit("Regression check(s) failed: " + ", ".join(failed))
+          PY
