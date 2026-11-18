@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#5b35d5">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';">
 <title>QuickPay — Demo Wallet</title>
 <style>
 :root {
@@ -176,17 +178,37 @@ footer { max-width:1100px; margin:auto; padding:0 20px 30px; text-align:center; 
   ];
   const $ = id => document.getElementById(id);
   const money = value => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(value);
+  const MAX_TRANSACTIONS = 500;
+  const MAX_BALANCE = 100000000;
+  const safe = value => String(value).replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
+  const normalizeTransaction = item => {
+    if (!item || typeof item !== 'object') return null;
+    const name = typeof item.name === 'string' ? item.name.trim().slice(0,80) : '';
+    const note = typeof item.note === 'string' ? item.note.trim().slice(0,100) : 'Demo transaction';
+    const amount = Number(item.amount);
+    const time = Number(item.time);
+    if (!name || !Number.isFinite(amount) || !Number.isFinite(time) || Math.abs(amount) > MAX_BALANCE) return null;
+    return { id: Number.isFinite(Number(item.id)) ? Number(item.id) : 0, name, note, amount, time, icon: typeof item.icon === 'string' ? item.icon.slice(0,8) : '↗' };
+  };
   const readState = () => {
     try {
       const parsed = JSON.parse(localStorage.getItem('quickpay-demo-state'));
-      if (parsed && Number.isFinite(parsed.balance) && Array.isArray(parsed.transactions)) return parsed;
+      if (parsed && Number.isFinite(parsed.balance) && parsed.balance >= 0 && parsed.balance <= MAX_BALANCE && Array.isArray(parsed.transactions)) {
+        const transactions = parsed.transactions.slice(0, MAX_TRANSACTIONS).map(normalizeTransaction).filter(Boolean);
+        return { balance: Math.round(parsed.balance * 100) / 100, transactions };
+      }
     } catch (_) {}
     return { balance: START_BALANCE, transactions: seedTransactions.map(item => ({ ...item })) };
   };
   let state = readState();
   let nextId = Math.max(0, ...state.transactions.map(item => Number(item.id) || 0)) + 1;
-  const save = () => { try { localStorage.setItem('quickpay-demo-state', JSON.stringify(state)); } catch (_) {} };
-  const safe = value => String(value).replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
+  const save = () => {
+    try {
+      state.transactions = state.transactions.slice(0, MAX_TRANSACTIONS);
+      state.balance = Math.round(Math.max(0, Math.min(MAX_BALANCE, state.balance)) * 100) / 100;
+      localStorage.setItem('quickpay-demo-state', JSON.stringify(state));
+    } catch (_) {}
+  };
   function render() {
     $('balance').textContent = money(state.balance);
     const host = $('transactions');
@@ -195,7 +217,13 @@ footer { max-width:1100px; margin:auto; padding:0 20px 30px; text-align:center; 
   }
   function openModal(title, html) { $('modal-title').textContent = title; $('modal-content').innerHTML = html; $('modal-backdrop').classList.add('open'); const focus = $('modal-content').querySelector('input,select,button'); if (focus) focus.focus(); }
   function closeModal() { $('modal-backdrop').classList.remove('open'); }
-  function record(name, amount, note, icon) { state.balance = Math.round((state.balance + amount) * 100) / 100; state.transactions.unshift({ id: nextId++, name, amount, note, icon, time: Date.now() }); save(); render(); }
+  function record(name, amount, note, icon) {
+    if (typeof name !== 'string' || !name.trim() || !Number.isFinite(amount) || !Number.isFinite(state.balance) ||
+        state.balance + amount < 0 || state.balance + amount > MAX_BALANCE) return false;
+    state.balance = Math.round((state.balance + amount) * 100) / 100;
+    state.transactions.unshift({ id: nextId++, name: name.trim().slice(0,80), amount, note: String(note || 'Demo transaction').slice(0,100), icon: String(icon || '↗').slice(0,8), time: Date.now() });
+    save(); render(); return true;
+  }
   function sendForm(prefill = '') {
     openModal('Send demo money', `<p class="helper">This transfer is simulated. No bank or UPI payment will occur.</p><form id="send-form"><div class="field"><label for="recipient">Recipient name</label><input id="recipient" name="recipient" maxlength="50" placeholder="e.g. Priya Verma" value="${safe(prefill)}" required></div><div class="field"><label for="amount">Amount (₹)</label><input id="amount" name="amount" type="number" min="1" max="${Math.max(1, state.balance)}" step="0.01" placeholder="250" required></div><div class="field"><label for="note">Note (optional)</label><input id="note" name="note" maxlength="60" placeholder="Lunch, books…"></div><button class="primary-btn" type="submit">Review demo transfer</button></form>`);
     $('send-form').addEventListener('submit', event => {
