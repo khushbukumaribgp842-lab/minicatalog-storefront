@@ -5,6 +5,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#070b16">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';">
 <link rel="icon" type="image/svg+xml" href="logo.svg">
 <title>MiniCatalog 3.0 — Your Shop, Elevated</title>
 <style>
@@ -462,6 +464,38 @@ const SALES_KEY = "minicatalog_sales_v1";
 const RATINGS_KEY = "minicatalog_ratings_v1";
 const THEME_KEY = "minicatalog_theme_v1";
 const DENSITY_KEY = "minicatalog_density_v1";
+const MAX_PRODUCTS = 10000;
+const MAX_SALES = 50000;
+const MAX_BACKUP_BYTES = 4 * 1024 * 1024;
+const SAFE_THEMES = ["violet","ocean","emerald","sunset"];
+const SAFE_DENSITIES = ["comfortable","compact"];
+const SAFE_CATEGORIES = ["Gaming","Electronics","Fashion","Home","Books & Stationery","Beauty","Sports","Accessories","Other"];
+const BLOCKED_KEYS = new Set(["__proto__","prototype","constructor"]);
+
+function isPlainObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+function isSafeHttpsUrl(value) {
+  return typeof value === "string" && (!value.trim() || /^https:\/\/[^\s"<>]+$/i.test(value.trim()));
+}
+function normalizeProduct(p) {
+  if (!isPlainObject(p)) return null;
+  const id = typeof p.id === "string" ? p.id.trim().slice(0,100) : "";
+  const name = typeof p.name === "string" ? p.name.trim().slice(0,80) : "";
+  const description = typeof p.description === "string" ? p.description.trim().slice(0,400) : "";
+  const category = typeof p.category === "string" && SAFE_CATEGORIES.includes(p.category) ? p.category : "Other";
+  const price = Number(p.price);
+  const stock = Number.isInteger(p.stock) && p.stock >= 0 && p.stock <= 1000000 ? p.stock : 10;
+  const image = typeof p.image === "string" && isSafeHttpsUrl(p.image) ? p.image.trim() : "";
+  if (!id || BLOCKED_KEYS.has(id) || !name || !Number.isFinite(price) || price < 0 || price > 10000000) return null;
+  return {id,name,description,category,price,image,stock};
+}
+function safeParseJSON(raw, fallback) {
+  try { return JSON.parse(raw); } catch { return fallback; }
+}
+function byteLength(value) {
+  try { return new Blob([value]).size; } catch { return String(value).length; }
+}
 let themeName = "violet", layoutDensity = "comfortable";
 try {
   const savedTheme = localStorage.getItem(THEME_KEY);
@@ -524,11 +558,8 @@ let whatsapp = "";
 let cart = {};
 
 try {
-  const saved = JSON.parse(localStorage.getItem(PRODUCTS_KEY) || "[]");
-  products = Array.isArray(saved) ? saved.filter(p =>
-    p && typeof p.name === "string" &&
-    Number.isFinite(p.price) && typeof p.id === "string"
-  ).map(p => ({...p, stock:Number.isInteger(p.stock)&&p.stock>=0?p.stock:10})) : [];
+  const saved = safeParseJSON(localStorage.getItem(PRODUCTS_KEY) || "[]", []);
+  products = Array.isArray(saved) ? saved.slice(0, MAX_PRODUCTS).map(normalizeProduct).filter(Boolean) : [];
 } catch { products = []; }
 const originalProductsSnapshot = JSON.stringify(products);
 products = normalizeDemoProducts(products);
@@ -579,13 +610,20 @@ $("densitySelect").addEventListener("change", () => {
 });
 function save() {
   try {
-    localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
-    localStorage.setItem(SHOP_KEY, shopName);
-    localStorage.setItem(DESCRIPTION_KEY, shopDescription);
-    localStorage.setItem(WHATSAPP_KEY, whatsapp);
-    localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    localStorage.setItem(SALES_KEY, JSON.stringify(sales));
-    localStorage.setItem(RATINGS_KEY, JSON.stringify(ratings));
+    if (products.length > MAX_PRODUCTS || sales.length > MAX_SALES) throw new Error("Local data limit reached.");
+    const payloads = {
+      [PRODUCTS_KEY]: JSON.stringify(products),
+      [SHOP_KEY]: String(shopName).slice(0,60),
+      [DESCRIPTION_KEY]: String(shopDescription).slice(0,400),
+      [WHATSAPP_KEY]: String(whatsapp).replace(/\D/g,"").slice(0,15),
+      [CART_KEY]: JSON.stringify(cart),
+      [SALES_KEY]: JSON.stringify(sales),
+      [RATINGS_KEY]: JSON.stringify(ratings)
+    };
+    const totalBytes = Object.values(payloads).reduce((n,v)=>n+byteLength(v),0);
+    if (totalBytes > MAX_BACKUP_BYTES) throw new Error("Browser storage limit reached.");
+    Object.entries(payloads).forEach(([key,value])=>localStorage.setItem(key,value));
+    storageWarning = false;
     return true;
   } catch (error) {
     storageWarning = true;
@@ -741,7 +779,7 @@ function render() {
     });
     const duplicate=element("button","","Duplicate");
     duplicate.addEventListener("click",()=>{
-      if(products.length>=10000)return setStatus("Catalog limit reached.");
+      if(products.length>=MAX_PRODUCTS)return setStatus("Catalog limit reached.");
       const copy={...p,id:Date.now().toString()+Math.random().toString(36).slice(2,8),name:(p.name+" (Copy)").slice(0,80)};
       products.unshift(copy);save();render();renderCart();renderDashboard();setStatus("Product duplicated. Edit the copy before publishing.");
     });
@@ -784,7 +822,7 @@ $("productForm").addEventListener("submit", e => {
   const description = $("productDescription").value.trim();
   const category = $("productCategory").value || "Other";
   const image = $("productImage").value.trim();
-  if (image && !/^https:\/\//i.test(image)) { setStatus("Image URL must begin with https://."); return; }
+  if (image && !isSafeHttpsUrl(image)) { setStatus("Image URL must be a valid https:// URL."); return; }
 
   if (!shopName || !name || !Number.isFinite(price) ||
       price < 0 || price > 10000000) {
@@ -1008,63 +1046,83 @@ $("backupFile").addEventListener("change", async e => {
   const file = e.target.files[0];
   if (!file) return;
   try {
-    const data = JSON.parse(await file.text());
-    if (!data || data.app !== "MiniCatalog" ||
+    if (file.size > MAX_BACKUP_BYTES) throw new Error("Backup file is too large (4 MB maximum).");
+    const data = safeParseJSON(await file.text(), null);
+    if (!isPlainObject(data) || data.app !== "MiniCatalog" ||
         (data.version !== undefined && ![1,2,3,4,5].includes(data.version)) ||
-        !Array.isArray(data.products) || data.products.length > 10000)
+        !Array.isArray(data.products) || data.products.length > MAX_PRODUCTS) {
       throw new Error("This is not a valid MiniCatalog backup.");
-    if (data.sales !== undefined && (!Array.isArray(data.sales) || data.sales.length > 50000 ||
-        !data.sales.every(s => s && typeof s.name === "string" &&
-          Number.isFinite(s.total) && s.total >= 0 && Number.isFinite(s.qty) &&
-          Number.isInteger(s.qty) && s.qty >= 0))) {
+    }
+
+    const importedProducts = data.products.map(normalizeProduct);
+    if (importedProducts.some(p => !p)) throw new Error("The backup contains invalid products.");
+    const ids = new Set();
+    for (const p of importedProducts) {
+      if (ids.has(p.id)) throw new Error("The backup contains duplicate product IDs.");
+      ids.add(p.id);
+    }
+
+    const importedSales = data.sales === undefined ? [] : data.sales;
+    if (!Array.isArray(importedSales) || importedSales.length > MAX_SALES ||
+        !importedSales.every(s => isPlainObject(s) &&
+          typeof s.name === "string" && s.name.length <= 80 &&
+          typeof s.productId === "string" && s.productId.length <= 100 &&
+          Number.isInteger(s.qty) && s.qty >= 0 && s.qty <= 1000000 &&
+          Number.isFinite(s.total) && s.total >= 0 && s.total <= 100000000 &&
+          typeof s.date === "string" && Number.isFinite(new Date(s.date).getTime()))) {
       throw new Error("The backup contains invalid sales records.");
     }
-    if (data.cart !== undefined && (!data.cart || typeof data.cart !== "object" ||
-        Array.isArray(data.cart) || Object.keys(data.cart).length > 10000 ||
-        !Object.entries(data.cart).every(([id, qty]) => typeof id === "string" &&
-          Number.isInteger(qty) && qty >= 1 && qty <= 100000))) {
-      throw new Error("The backup contains an invalid cart.");
-    }
-    if (data.ratings !== undefined && (!data.ratings || typeof data.ratings !== "object" ||
-        Array.isArray(data.ratings) || Object.keys(data.ratings).length > 10000 ||
-        !Object.values(data.ratings).every(list => Array.isArray(list) &&
-          list.length <= 10000 && list.every(n => Number.isInteger(n) && n >= 1 && n <= 5)))) {
+
+    const importedRatings = data.ratings === undefined ? {} : data.ratings;
+    if (!isPlainObject(importedRatings) || Object.keys(importedRatings).length > MAX_PRODUCTS ||
+        Object.entries(importedRatings).some(([id,list]) =>
+          BLOCKED_KEYS.has(id) || !ids.has(id) || !Array.isArray(list) || list.length > 10000 ||
+          list.some(n => !Number.isInteger(n) || n < 1 || n > 5))) {
       throw new Error("The backup contains invalid ratings.");
     }
 
-    const importedIds = new Set();
-    const valid = data.products.every(p => {
-      if (!p || typeof p.id !== "string" || !p.id || p.id.length > 100 || importedIds.has(p.id) ||
-          typeof p.name !== "string" || !p.name.trim() || p.name.length > 80 ||
-          typeof p.description !== "string" || p.description.length > 400 ||
-          (p.category !== undefined && (typeof p.category !== "string" || p.category.length > 60)) ||
-          !Number.isFinite(p.price) || p.price < 0 || p.price > 10000000 ||
-          (p.stock !== undefined && (!Number.isInteger(p.stock) || p.stock < 0 || p.stock > 1000000)) ||
-          (p.image !== undefined && (typeof p.image !== "string" || (p.image && !/^https:\/\//i.test(p.image))))) return false;
-      importedIds.add(p.id);
-      return true;
-    });
-    if (!valid) throw new Error("The backup contains invalid products.");
+    const importedCart = data.cart === undefined ? {} : data.cart;
+    if (!isPlainObject(importedCart) || Object.keys(importedCart).length > MAX_PRODUCTS ||
+        Object.entries(importedCart).some(([id,qty]) =>
+          BLOCKED_KEYS.has(id) || !ids.has(id) || !Number.isInteger(qty) || qty < 1 || qty > 1000000)) {
+      throw new Error("The backup contains an invalid cart.");
+    }
+
     if (!confirm("Replace the current catalog with this backup?")) return;
 
-    products = data.products.map(p => ({...p,stock:Number.isInteger(p.stock)&&p.stock>=0?p.stock:10}));
-    if(Array.isArray(data.sales))sales=data.sales.map(s=>({...s})); else sales=[];
-    if(data.ratings&&typeof data.ratings==="object"&&!Array.isArray(data.ratings))ratings=data.ratings; else ratings={};
-    if(["violet","ocean","emerald","sunset"].includes(data.themeName)){themeName=data.themeName;$("themeSelect").value=themeName;}
-    if(["comfortable","compact"].includes(data.layoutDensity)){layoutDensity=data.layoutDensity;$("densitySelect").value=layoutDensity;}
-    applyAppearance();
-    const importedCart = data.cart && typeof data.cart==="object" && !Array.isArray(data.cart) ? data.cart : cart;
-    cart = Object.fromEntries(Object.entries(importedCart).filter(([id,qty]) =>
-      products.some(p => p.id === id && Number.isInteger(qty) && qty >= 1 && qty <= p.stock)));
-    shopName = String(data.shopName || "").slice(0,60);
-    shopDescription = String(data.shopDescription || "").slice(0,400);
-    whatsapp = String(data.whatsapp || "").replace(/\D/g,"").slice(0,15);
+    products = importedProducts;
+    sales = importedSales.map(s => ({...s}));
+    ratings = Object.fromEntries(Object.entries(importedRatings).map(([id,list]) => [id,[...list]]));
+    cart = Object.fromEntries(Object.entries(importedCart).filter(([id,qty]) => {
+      const p = products.find(item => item.id === id);
+      return p && qty <= p.stock;
+    }));
+    shopName = typeof data.shopName === "string" ? data.shopName.trim().slice(0,60) : "";
+    shopDescription = typeof data.shopDescription === "string" ? data.shopDescription.trim().slice(0,400) : "";
+    whatsapp = typeof data.whatsapp === "string" ? data.whatsapp.replace(/\D/g,"").slice(0,15) : "";
+
+    if (SAFE_THEMES.includes(data.themeName)) {
+      themeName = data.themeName;
+      $("themeSelect").value = themeName;
+    }
+    if (SAFE_DENSITIES.includes(data.layoutDensity)) {
+      layoutDensity = data.layoutDensity;
+      $("densitySelect").value = layoutDensity;
+    }
+
     $("shopName").value = shopName;
     $("shopDescription").value = shopDescription;
     $("whatsapp").value = whatsapp;
-    save(); render(); renderCart(); renderDashboard(); setStatus("Backup imported.");
-  } catch(err) { setStatus(err.message || "Import failed."); }
-  finally { e.target.value = ""; }
+    applyAppearance();
+    if (!save()) throw new Error("Backup was loaded but could not be saved in this browser. Export it again before leaving.");
+    render(); renderCart(); renderDashboard();
+    setStatus("Backup imported and validated.");
+  } catch(err) {
+    setStatus(err.message || "Import failed.");
+    console.error("MiniCatalog backup import:", err);
+  } finally {
+    e.target.value = "";
+  }
 });
 
 $("clearBtn").addEventListener("click", () => {
@@ -1094,7 +1152,7 @@ function makeStorefront() {
     const stockText=stock===0?"Out of stock":stock<=3?"Low stock · "+stock+" left":stock+" in stock";
     const description = escapeHTML(p.description || "");
     const price = escapeHTML(money(p.price));
-    const imageUrl = typeof p.image === "string" && /^https:\/\//i.test(p.image) ? p.image : categoryImage(p.category);
+    const imageUrl = isSafeHttpsUrl(p.image) && p.image ? p.image : categoryImage(p.category);
     const image = '<img class="product-image" src="' + escapeHTML(imageUrl) + '" alt="' + name + '" loading="lazy">';
     const message = encodeURIComponent(
       `Hello ${shopName || "shop"}, I am interested in ${p.name} (${money(p.price)}).`
@@ -1186,6 +1244,15 @@ $("exportStoreBtn").addEventListener("click", () => {
   if (!products.length && !confirm("Export a storefront with no products?")) return;
   downloadFile("storefront.html", makeStorefront(), "text/html;charset=utf-8");
   setStatus("Storefront exported. Open storefront.html to preview it.");
+});
+
+window.addEventListener("error", event => {
+  console.error("MiniCatalog runtime error:", event.error || event.message);
+  setStatus("Something went wrong. Refresh and try again.");
+});
+window.addEventListener("unhandledrejection", event => {
+  console.error("MiniCatalog promise error:", event.reason);
+  setStatus("A background action failed. Refresh and try again.");
 });
 
 render();
